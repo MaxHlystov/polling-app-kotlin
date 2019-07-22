@@ -1,0 +1,7 @@
+spring:
+  data:
+    mongodb:
+      host: ${host:localhost}
+      port: ${port:27017}
+      database: ${database:polling-app}
+

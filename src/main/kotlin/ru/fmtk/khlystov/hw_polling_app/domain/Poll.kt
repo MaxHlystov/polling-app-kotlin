@@ -4,5 +4,8 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document
-class Poll(@Id val id: String, val items: List<PollItem>) {
+data class Poll(@Id val id: String,
+                val title: String,
+                val owner: User,
+                val items: List<PollItem>) {
 }
