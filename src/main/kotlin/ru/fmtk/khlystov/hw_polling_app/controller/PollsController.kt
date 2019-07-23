@@ -2,10 +2,7 @@ package ru.fmtk.khlystov.hw_polling_app.controller
 
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.*
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 
@@ -16,12 +13,13 @@ class PollsController(private val userRepository: UserRepository,
     @GetMapping("/polls/add")
     fun addPoll(@RequestParam(required = true) userId: String,
                 model: Model): String {
-        val user = userRepository.findById(userId)
-        if (user.isPresent) {
+        return userRepository.findById(userId).map { user ->
+            model.addAttribute("addOperation", true)
             model.addAttribute("user", user)
-            return "polls/add"
+            model.addAttribute("poll", null)
+            "polls/edit"
         }
-        return "auth"
+                .orElse("auth")
     }
 
     @RequestMapping("/polls/list")
@@ -40,27 +38,37 @@ class PollsController(private val userRepository: UserRepository,
     fun editPoll(@RequestParam(name = "id", required = true) pollId: String,
                  @RequestParam(required = true) userId: String,
                  model: Model): String {
-//        var user = userRepository.findById(userId)
-//        model.addAttribute("user", user)
-//        model.addAttribute("polls", pollRepository.findAllByOwner(user))
-        return "polls/edit"
+        return userRepository.findById(userId).flatMap { user ->
+            pollRepository.findById(pollId).map { poll ->
+                model.addAttribute("addOperation", false)
+                model.addAttribute("user", user)
+                model.addAttribute("poll", poll)
+                "polls/edit"
+            }
+        }
+                .orElse("auth")
+    }
 
+    @PostMapping("/polls/save")
+    fun savePoll(@RequestParam(required = true) pollId: String,
+                 @RequestParam(required = true) userId: String,
+                 @RequestParam(required = true) title: String,
+                 @RequestParam(required = true) items: List<String>): String {
+        return "polls/list"
     }
 
     @DeleteMapping("/polls")
-    fun deletePoll(@RequestParam(name = "id", required = true) pollId: String,
+    fun deletePoll(@RequestParam(required = true) pollId: String,
                    @RequestParam(required = true) userId: String): String {
+        pollRepository.deleteById(pollId)
         return "polls/list"
     }
 
     @GetMapping("/polls/vote")
-    fun votePoll(@RequestParam(name = "id", required = true) pollId: String,
+    fun votePoll(@RequestParam(required = true) pollId: String,
                  @RequestParam(required = true) userId: String,
                  model: Model): String {
-//        var user: User = userRepository.findByName(userName)
-//                ?: userRepository.save(User(userName))
-//        model.addAttribute("user", user)
-//        model.addAttribute("polls", pollRepository.findAllByOwner(user))
+
         return "polls/vote"
 
     }

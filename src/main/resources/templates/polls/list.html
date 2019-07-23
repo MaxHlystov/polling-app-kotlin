@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>Edit person</title>
+    <title>Polls</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
@@ -22,13 +22,13 @@
     <tr th:each="poll : ${polls}">
         <td th:text="${poll.id}">1</td>
         <td>
-            <a class="btn btn-primary" role="button" href="polls/vote.html" th:href="@{/vote(id=${poll.id}, userId=${user.id})}"
+            <a class="btn btn-primary" role="button" href="polls/vote.html" th:href="@{/vote(pollId=${poll.id}, userId=${user.id})}"
                th:text="${poll.title}">Any poll</a>
         </td>
         <td>
-            <a class="btn btn-primary" role="button" href="polls/edit.html" th:href="@{/edit(id=${poll.id})}">Edit</a>
+            <a class="btn btn-primary" role="button" href="polls/edit.html" th:href="@{/edit(pollId=${poll.id})}">Edit</a>
             <a class="btn btn-primary" role="button" href="polls/delete.html"
-               th:href="@{/delete(id=${poll.id})}">Edit</a>
+               th:href="@{/delete(pollId=${poll.id})}">Edit</a>
         </td>
     </tr>
     </tbody>
