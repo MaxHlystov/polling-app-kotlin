@@ -21,14 +21,18 @@
     <tbody>
     <tr th:each="poll : ${polls}">
         <td th:text="${poll.id}">1</td>
-        <td th:text="${poll.title}">Any poll</td>
         <td>
-            <a class="btn btn-primary" role="button" href="polls/edit" th:href="@{/edit(id=${poll.id})}">Edit</a>
+            <a class="btn btn-primary" role="button" href="polls/vote.html" th:href="@{/vote(id=${poll.id})}"
+               th:text="${poll.title}">Any poll</a>
+        </td>
+        <td>
+            <a class="btn btn-primary" role="button" href="polls/edit.html" th:href="@{/edit(id=${poll.id})}">Edit</a>
+            <a class="btn btn-primary" role="button" href="polls/delete.html"
+               th:href="@{/delete(id=${poll.id})}">Edit</a>
         </td>
     </tr>
     </tbody>
 </table>
-<a class="btn btn-primary" role="button" href="polls/add"  th:href="@{/edit(id=${poll.id})}">Add new poll</a>
-
+<a class="btn btn-primary" role="button" href="polls/add.html">Add new poll</a>
 </body>
 </html>
