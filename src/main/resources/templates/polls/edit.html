@@ -15,7 +15,7 @@
             var input = document.createElement("input");
             input.classList.add("form-control");
             input.type = "text";
-            input.name = "option" + number;
+            input.name = "option"; // + number;
             input.placeholder = "Input name of the option...";
             listItem.appendChild(input);
             optionsNumber.value = number;
@@ -27,17 +27,17 @@
     poll for
     <span th:text="${user.name}" th:remove="tag">user</span>.</h3>
 
-<form action="save" method="post">
+<form action="/polls/save" method="post">
     <input type="hidden" name="userId" th:value="${user.id}"/>
     <label for="title">Poll title</label>
     <input type="text" id="title" name="title" th:value="${addOperation}? '' : ${poll.title}"/>
-    <input type="hidden" id="options_number" name="options_number" th:value="${addOperation}? 0 :${poll.items.size}">
+    <input type="hidden" id="options_number" name="options_number" th:value="${addOperation}? 0 : ${poll.items.size()}">
     <input th:if="${!addOperation}" type="hidden" name="pollId" th:value="${poll.id}">
     <h4>Options to vote:</h4>
     <ol id="container">
         <div th:if="${!addOperation}" th:remove="tag">
             <li th:each="item,iterStat : ${poll.items}">
-                <input class="form-control" type="text" th:name="'option' + ${iterStat.count}" th:value="${item.title}">
+                <input class="form-control" type="text" th:name="'option' + ${iterStat.count}" th:value="${item}">
             </li>
         </div>
     </ol>

@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
-    <meta charset="UTF-8"/>
-    <title>Edit person</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Select user to authorize</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <body>
-<h3>Vote for poll <span th:text="${poll.title}" th:remove="tag">empty poll</span>.</h3>
 <h3>It will be made in the next homework.</h3>
-<a class="btn btn-primary" role="button" th:href="@{/polls/list(userId=${user.id})}">Return to the main list of polls</a>
+<a href="/polls">Return to the main list of polls</a>
 </body>
 </html>

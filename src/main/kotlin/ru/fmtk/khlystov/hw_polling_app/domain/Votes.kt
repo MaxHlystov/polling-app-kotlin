@@ -6,6 +6,6 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document
 data class Votes(@Id val id: String,
             val poll: Poll,
-            val votes: Map<PollItem, Integer>,
-            val usersVotes: Map<PollItem, List<User>>) {
+            val votes: Map<String, Integer>,
+            val usersVotes: Map<String, List<User>>) {
 }

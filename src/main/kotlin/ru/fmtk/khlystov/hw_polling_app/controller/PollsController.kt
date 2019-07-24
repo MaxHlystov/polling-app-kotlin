@@ -3,8 +3,11 @@ package ru.fmtk.khlystov.hw_polling_app.controller
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.*
+import ru.fmtk.khlystov.hw_polling_app.domain.Poll
+import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
+import java.util.*
 
 @Controller
 class PollsController(private val userRepository: UserRepository,
@@ -13,7 +16,7 @@ class PollsController(private val userRepository: UserRepository,
     @GetMapping("/polls/add")
     fun addPoll(@RequestParam(required = true) userId: String,
                 model: Model): String {
-        return userRepository.findById(userId).map { user ->
+        return withUser(userId) { user ->
             model.addAttribute("addOperation", true)
             model.addAttribute("user", user)
             model.addAttribute("poll", null)
@@ -25,51 +28,80 @@ class PollsController(private val userRepository: UserRepository,
     @RequestMapping("/polls/list")
     fun listPolls(@RequestParam(required = true) userId: String,
                   model: Model): String {
-        var optUser = userRepository.findById(userId)
-        return optUser.map { user ->
+        return withUser(userId) { user ->
             model.addAttribute("user", user)
-            model.addAttribute("polls", pollRepository.findAllByOwner(user))
+            model.addAttribute("polls", pollRepository.findAll())
             "polls/list"
         }
                 .orElse("auth")
     }
 
     @GetMapping("/polls/edit")
-    fun editPoll(@RequestParam(name = "id", required = true) pollId: String,
+    fun editPoll(@RequestParam(
+            required = true) pollId: String,
                  @RequestParam(required = true) userId: String,
                  model: Model): String {
-        return userRepository.findById(userId).flatMap { user ->
-            pollRepository.findById(pollId).map { poll ->
+        return withUserAndPoll(userId, pollId) { user, poll ->
+            if (poll.owner.id == userId) {
                 model.addAttribute("addOperation", false)
                 model.addAttribute("user", user)
                 model.addAttribute("poll", poll)
-                "polls/edit"
+                return@withUserAndPoll "polls/edit"
             }
+            "polls/list"
         }
                 .orElse("auth")
     }
 
     @PostMapping("/polls/save")
-    fun savePoll(@RequestParam(required = true) pollId: String,
-                 @RequestParam(required = true) userId: String,
+    fun savePoll(@RequestParam(required = true) userId: String,
+                 @RequestParam pollId: String?,
                  @RequestParam(required = true) title: String,
-                 @RequestParam(required = true) items: List<String>): String {
-        return "polls/list"
+                 @RequestParam(value="option", required = true) options: List<String>,
+                 model: Model): String {
+        return withUser(userId) { user ->
+            val items = options.filter(String::isNotEmpty)
+            var poll = Poll(pollId, title, user, items)
+            poll = pollRepository.save(poll)
+            model.addAttribute("user", user)
+            model.addAttribute("poll", poll)
+            "polls/vote"
+        }.orElse("auth")
     }
 
     @DeleteMapping("/polls")
     fun deletePoll(@RequestParam(required = true) pollId: String,
-                   @RequestParam(required = true) userId: String): String {
-        pollRepository.deleteById(pollId)
-        return "polls/list"
+                   @RequestParam(required = true) userId: String,
+                   model: Model): String {
+        return withUserAndPoll(userId, pollId) { user, poll ->
+            model.addAttribute("user", user)
+            pollRepository.delete(poll)
+            "polls/list"
+        }.orElse("auth")
     }
 
     @GetMapping("/polls/vote")
     fun votePoll(@RequestParam(required = true) pollId: String,
                  @RequestParam(required = true) userId: String,
                  model: Model): String {
+        return withUserAndPoll(userId, pollId) { user, poll ->
+            model.addAttribute("user", user)
+            model.addAttribute("poll", poll)
+            "polls/vote"
+        }.orElse("auth")
+    }
 
-        return "polls/vote"
+    private fun <T> withUser(userId: String, block: (user: User) -> T): Optional<T> {
+        return userRepository.findById(userId).map(block)
+    }
 
+    private fun <T> withUserAndPoll(userId: String,
+                                    pollId: String,
+                                    block: (user: User, poll: Poll) -> T): Optional<T> {
+        return withUser(userId) { user ->
+            pollRepository.findById(pollId).map { poll ->
+                block(user, poll)
+            }.get()
+        }
     }
 }
