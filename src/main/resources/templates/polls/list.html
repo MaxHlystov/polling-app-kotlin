@@ -26,7 +26,7 @@
         <td>
             <div th:if="${user} == ${poll.owner}">
                 <a class="btn btn-primary" role="button" href="/polls/edit.html" th:href="@{/polls/edit(pollId=${poll.id}, userId=${user.id})}">Edit</a>
-                <a class="btn btn-primary" role="button" href="/polls/list.html" th:href="@{/polls(pollId=${poll.id}, userId=${user.id})}">Delete</a>
+                <a class="btn btn-primary" role="button" href="/polls/list.html" th:href="@{/polls/delete(pollId=${poll.id}, userId=${user.id})}">Delete</a>
             </div>
         </td>
     </tr>

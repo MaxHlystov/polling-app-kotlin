@@ -5,8 +5,7 @@ import org.springframework.data.mongodb.core.mapping.DBRef
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document
-data class Votes(@Id val id: String?,
+data class Vote(@Id val id: String?,
+                 @DBRef val user: User,
                  @DBRef val poll: Poll,
-                 @DBRef val pollItem: PollItem,
-                 val votes: Integer,
-                 val usersIds: List<String>)
+                 @DBRef val pollItem: PollItem)

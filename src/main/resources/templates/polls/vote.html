@@ -2,31 +2,27 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title>Edit person</title>
+    <title th:text="${poll.title} + 'Vote for the options you like'">Vote for the options you like</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <body>
-<h3>Vote for poll <span th:text="${poll.title}" th:remove="tag">empty poll</span>.</h3>
+<h3>Vote for &quot;<span th:text="${poll.title}" th:remove="tag">empty</span>&quot; poll.</h3>
 
 <form action="/polls/vote" method="post">
     <input type="hidden" name="userId" th:value="${user.id}"/>
-    <label for="title">Poll title</label>
-    <input type="text" id="title" name="title" th:value="${addOperation}? '' : ${poll.title}"/>
-    <input th:if="${!addOperation}" type="hidden" name="pollId" th:value="${poll.id}">
-    <h4>Options to vote:</h4>
-    <ol id="container">
-        <div th:if="${!addOperation}" th:remove="tag">
-            <li th:each="item : ${poll.items}">
-                <input class="form-control" type="text" th:name="option" th:value="${item}">
-            </li>
-        </div>
-    </ol>
-    <a class="btn btn-primary" role="button" href="#" id="add_option" onclick="addOption()">Add option</a>
+    <input type="hidden" name="pollId" th:value="${poll.id}">
+    <h4>Select option you want to vote:</h4>
+
+    <div th:each="item : ${poll.items}">
+        <div><input type="radio" name="option" value="${item.id}" /><span th:text="${item.title}">option</span></div>
+    </div>
+
     <input class="btn btn-primary" role="button" type="submit" value="Save and close"/>
     <a class="btn btn-primary" role="button" th:href="@{/polls/list(userId=${user.id})}">Cancel</a>
 </form>
 
-<a class="btn btn-primary" role="button" th:href="@{/polls/list(userId=${user.id})}">Return to the main list of polls</a>
+<a class="btn btn-primary" role="button" th:href="@{/polls/list(userId=${user.id})}">Return to the main list of
+    polls</a>
 </body>
 </html>
