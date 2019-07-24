@@ -7,16 +7,14 @@
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script type='text/javascript'>
         function addOption() {
-            var optionsNumber = document.getElementById("options_number");
-            var number = parseInt(optionsNumber.value, 10) + 1;
             var container = document.getElementById("container");
             var listItem = document.createElement("li");
             container.appendChild(listItem);
             var input = document.createElement("input");
             input.classList.add("form-control");
             input.type = "text";
-            input.name = "option"; // + number;
-            input.placeholder = "Input name of the option...";
+            input.name = "option";
+            input.placeholder = "Input the name of the option...";
             listItem.appendChild(input);
             optionsNumber.value = number;
         }
@@ -31,13 +29,12 @@
     <input type="hidden" name="userId" th:value="${user.id}"/>
     <label for="title">Poll title</label>
     <input type="text" id="title" name="title" th:value="${addOperation}? '' : ${poll.title}"/>
-    <input type="hidden" id="options_number" name="options_number" th:value="${addOperation}? 0 : ${poll.items.size()}">
     <input th:if="${!addOperation}" type="hidden" name="pollId" th:value="${poll.id}">
     <h4>Options to vote:</h4>
     <ol id="container">
         <div th:if="${!addOperation}" th:remove="tag">
-            <li th:each="item,iterStat : ${poll.items}">
-                <input class="form-control" type="text" th:name="'option' + ${iterStat.count}" th:value="${item}">
+            <li th:each="item : ${poll.items}">
+                <input class="form-control" type="text" th:name="'option_' + ${item.id}" th:value="${item.title}">
             </li>
         </div>
     </ol>

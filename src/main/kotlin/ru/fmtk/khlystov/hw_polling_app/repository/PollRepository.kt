@@ -6,6 +6,4 @@ import ru.fmtk.khlystov.hw_polling_app.domain.Poll
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 
 @Repository
-interface PollRepository : MongoRepository<Poll, String> {
-    fun findAllByOwner(user: User): List<Poll>
-}
+interface PollRepository : MongoRepository<Poll, String>

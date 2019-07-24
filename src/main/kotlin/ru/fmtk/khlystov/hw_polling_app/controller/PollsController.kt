@@ -2,8 +2,10 @@ package ru.fmtk.khlystov.hw_polling_app.controller
 
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
+import org.springframework.util.MultiValueMap
 import org.springframework.web.bind.annotation.*
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
+import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
@@ -57,11 +59,13 @@ class PollsController(private val userRepository: UserRepository,
     fun savePoll(@RequestParam(required = true) userId: String,
                  @RequestParam pollId: String?,
                  @RequestParam(required = true) title: String,
-                 @RequestParam(value="option", required = true) options: List<String>,
+                 @RequestParam values: MultiValueMap<String, String>,
                  model: Model): String {
         return withUser(userId) { user ->
-            val items = options.filter(String::isNotEmpty)
-            var poll = Poll(pollId, title, user, items)
+            val pollItems = values.filter { (key, _) -> key.startsWith("option") }
+                    .flatMap { (_, s) -> s }
+                    .filter(String::isNotEmpty).map {title -> PollItem(null, title) }
+            var poll = Poll(pollId, title, user, pollItems)
             poll = pollRepository.save(poll)
             model.addAttribute("user", user)
             model.addAttribute("poll", poll)
@@ -88,6 +92,18 @@ class PollsController(private val userRepository: UserRepository,
             model.addAttribute("user", user)
             model.addAttribute("poll", poll)
             "polls/vote"
+        }.orElse("auth")
+    }
+
+    @PostMapping("/polls/vote")
+    fun saveVote(@RequestParam(required = true) pollId: String,
+                 @RequestParam(required = true) userId: String,
+                 @RequestParam(required = true) optionNumber: Int,
+                 model: Model): String {
+        return withUserAndPoll(userId, pollId) { user, poll ->
+            model.addAttribute("user", user)
+            model.addAttribute("poll", poll)
+            "polls/statistics"
         }.orElse("auth")
     }
 

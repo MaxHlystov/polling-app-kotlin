@@ -20,19 +20,19 @@
     <tbody>
     <tr th:each="poll : ${polls}">
         <td>
-            <a href="polls/vote.html" th:href="@{/polls/vote(pollId=${poll.id}, userId=${user.id})}"
+            <a href="/polls/vote.html" th:href="@{/polls/vote(pollId=${poll.id}, userId=${user.id})}"
                th:text="${poll.title}">Any poll</a>
         </td>
         <td>
             <div th:if="${user} == ${poll.owner}">
-                <a class="btn btn-primary" role="button" href="polls/edit.html" th:href="@{/polls/edit(pollId=${poll.id}, userId=${user.id})}">Edit</a>
-                <a class="btn btn-primary" role="button" href="polls/list.html" th:href="@{/polls(pollId=${poll.id}, userId=${user.id})}">Delete</a>
+                <a class="btn btn-primary" role="button" href="/polls/edit.html" th:href="@{/polls/edit(pollId=${poll.id}, userId=${user.id})}">Edit</a>
+                <a class="btn btn-primary" role="button" href="/polls/list.html" th:href="@{/polls(pollId=${poll.id}, userId=${user.id})}">Delete</a>
             </div>
         </td>
     </tr>
     </tbody>
 </table>
-<p th:if="${polls.size() == 0}">There are no any polls to list. Add new one.</p>
+<p th:if="${polls.size() == 0}">There are no any polls to show. Add new one.</p>
 <a class="btn btn-primary" role="button" th:href="@{/polls/add(userId=${user.id})}">Add new poll</a>
 </body>
 </html>
