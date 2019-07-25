@@ -12,11 +12,13 @@ import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
+import ru.fmtk.khlystov.hw_polling_app.repository.VoteRepository
 import java.util.*
 
 @Controller
 class PollsController(private val userRepository: UserRepository,
-                      private val pollRepository: PollRepository) {
+                      private val pollRepository: PollRepository,
+                      private val voteRepository: VoteRepository) {
 
     @GetMapping("/polls/add")
     fun addPoll(@RequestParam(required = true) userId: String,
@@ -102,11 +104,15 @@ class PollsController(private val userRepository: UserRepository,
     @PostMapping("/polls/vote")
     fun saveVote(@RequestParam(required = true) pollId: String,
                  @RequestParam(required = true) userId: String,
-                 @RequestParam(required = true) optionNumber: Int,
+                 @RequestParam(name = "option", required = true) itemId: String,
                  model: Model): String {
         return withUserAndPoll(userId, pollId) { user, poll ->
+            voteRepository.findById(itemId).map { vote ->
+                voteRepository.saveVote(user, poll, itemId)
+            }
             model.addAttribute("user", user)
             model.addAttribute("poll", poll)
+            model.addAttribute("votes", voteRepository.getVotes(poll))
             "polls/statistics"
         }.orElse("auth")
     }
