@@ -2,25 +2,27 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
-    <title th:text="${poll.title} + 'Vote for the options you like'">Vote for the options you like</title>
+    <title th:text="'Voting results for the poll ' + ${poll.title}">Voting results</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <body>
-<h3>Vote for &quot;<span th:text="${poll.title}" th:remove="tag">empty</span>&quot; poll.</h3>
+<h3>Voting results for the &quot;<span th:text="${poll.title}" th:remove="tag">empty</span>&quot; poll.</h3>
 
-<form action="/polls/vote" method="post">
-    <input type="hidden" name="userId" th:value="${user.id}"/>
-    <input type="hidden" name="pollId" th:value="${poll.id}">
-    <h4>Select option you want to vote:</h4>
-
-    < th:each="item : ${poll.items}">
-        <input type="radio" name="option" value="${item.id}" /><span th:text="${item.title}">option</span><br>
-    </div>
-
-    <input class="btn btn-primary" role="button" type="submit" value="Save and close"/>
-    <a class="btn btn-primary" role="button" th:href="@{/polls/list(userId=${user.id})}">Cancel</a>
-</form>
+<table class="polls" th:if="${polls.size() > 0}">
+    <thead>
+    <tr>
+        <th>Title</th>
+        <th>Votes count</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="voteCount : ${votesCount}">
+        <td th:text="${voteCount.pollItem.title}">Poll item</td>
+        <td th:text="${voteCount.count}">0</td>
+    </tr>
+    </tbody>
+</table>
 
 <a class="btn btn-primary" role="button" th:href="@{/polls/list(userId=${user.id})}">Return to the main list of
     polls</a>

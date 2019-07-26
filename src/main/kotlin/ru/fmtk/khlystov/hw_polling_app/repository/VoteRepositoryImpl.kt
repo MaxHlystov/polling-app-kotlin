@@ -8,8 +8,8 @@ import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
-import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
 import ru.fmtk.khlystov.hw_polling_app.domain.Vote
+import ru.fmtk.khlystov.hw_polling_app.domain.VotesCount
 
 
 @Repository
@@ -24,14 +24,13 @@ class VoteRepositoryImpl(private val mongoTemplate: MongoTemplate) : voteReposit
         return mongoTemplate.save(vote)
     }
 
-    override fun getVotes(poll: Poll): Map<PollItem, Int> {
+    override fun getVotes(poll: Poll): List<VotesCount> {
         val agg = newAggregation(
                 match(Criteria.where("poll.id").`is`(poll.id)),
                 group("pollItem").count().`as`("total"),
                 project("total").and("pollItem").previousOperation())
-        val itemsCounts: List<VotesCount> = mongoTemplate.aggregate(agg, Vote::class.java, VotesCount::class.java).getMappedResults()
-        return itemsCounts.asSequence().groupingBy { it -> it.pollItem }.eachCount()
+        return mongoTemplate.aggregate(agg, Vote::class.java, VotesCount::class.java)
+                .getMappedResults()
     }
 }
 
-private class VotesCount(val pollItem: PollItem, val total: Long)

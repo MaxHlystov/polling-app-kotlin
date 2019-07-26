@@ -115,7 +115,7 @@ class PollsController(private val userRepository: UserRepository,
     private fun getPollStatisticsView(user: User, poll: Poll, model: Model): String {
         model.addAttribute("user", user)
         model.addAttribute("poll", poll)
-        model.addAttribute("votes", voteRepository.getVotes(poll))
+        model.addAttribute("votesCount", voteRepository.getVotes(poll))
         return "polls/statistics"
     }
 

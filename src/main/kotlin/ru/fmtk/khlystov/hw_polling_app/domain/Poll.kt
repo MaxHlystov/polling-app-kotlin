@@ -5,7 +5,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 import java.util.*
 
 @Document
-data class Poll(@Id val id: String?,
+data class Poll(@Id var id: String?,
                 val title: String,
                 val owner: User,
                 val items: List<PollItem>) {

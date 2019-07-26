@@ -32,6 +32,7 @@
     </tr>
     </tbody>
 </table>
+
 <p th:if="${polls.size() == 0}">There are no any polls to show. Add new one.</p>
 <a class="btn btn-primary" role="button" th:href="@{/polls/add(userId=${user.id})}">Add new poll</a>
 </body>

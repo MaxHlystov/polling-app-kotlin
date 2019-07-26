@@ -14,8 +14,9 @@
     <input type="hidden" name="pollId" th:value="${poll.id}">
     <h4>Select option you want to vote:</h4>
 
-    < th:each="item : ${poll.items}">
-        <input type="radio" name="option" value="${item.id}" /><span th:text="${item.title}">option</span><br>
+    <div th:each="item : ${poll?.items}">
+        <input type="radio" name="option" th:value="${item.id}">
+        <span th:text="${item?.title}">option</span><br>
     </div>
 
     <input class="btn btn-primary" role="button" type="submit" value="Save and close"/>
