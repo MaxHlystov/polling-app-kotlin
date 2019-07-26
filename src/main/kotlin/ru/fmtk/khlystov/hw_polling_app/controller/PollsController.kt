@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
 import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
 import ru.fmtk.khlystov.hw_polling_app.domain.User
+import ru.fmtk.khlystov.hw_polling_app.domain.Vote
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.VoteRepository
@@ -24,25 +25,16 @@ class PollsController(private val userRepository: UserRepository,
     fun addPoll(@RequestParam(required = true) userId: String,
                 model: Model): String {
         return withUser(userId) { user ->
-            model.addAttribute("addOperation", true)
-            model.addAttribute("user", user)
-            model.addAttribute("poll", null)
-            "polls/edit"
-        }
-                .orElse("auth")
+            getPollEditView(user, null, model)
+        }.orElse("auth")
     }
 
     @RequestMapping("/polls/list")
     fun listPolls(@RequestParam(required = true) userId: String,
                   model: Model): String {
-        return withUser(userId) { user -> getPollsListView(user, model) }
-                .orElse("auth")
-    }
-
-    private fun getPollsListView(user: User, model: Model): String {
-        model.addAttribute("user", user)
-        model.addAttribute("polls", pollRepository.findAll())
-        return "polls/list"
+        return withUser(userId) { user ->
+            getPollsListView(user, model)
+        }.orElse("auth")
     }
 
     @GetMapping("/polls/edit")
@@ -52,14 +44,11 @@ class PollsController(private val userRepository: UserRepository,
                  model: Model): String {
         return withUserAndPoll(userId, pollId) { user, poll ->
             if (poll.owner.id == userId) {
-                model.addAttribute("addOperation", false)
-                model.addAttribute("user", user)
-                model.addAttribute("poll", poll)
-                return@withUserAndPoll "polls/edit"
+                getPollEditView(user, poll, model)
+            } else {
+                getPollsListView(user, model)
             }
-            getPollsListView(user, model)
-        }
-                .orElse("auth")
+        }.orElse("auth")
     }
 
     @PostMapping("/polls/save")
@@ -74,9 +63,7 @@ class PollsController(private val userRepository: UserRepository,
                     .filter(String::isNotEmpty).map { title -> PollItem(null, title) }
             var poll = Poll(pollId, title, user, pollItems)
             poll = pollRepository.save(poll)
-            model.addAttribute("user", user)
-            model.addAttribute("poll", poll)
-            "polls/vote"
+            getVoteView(user, poll, model)
         }.orElse("auth")
     }
 
@@ -95,9 +82,7 @@ class PollsController(private val userRepository: UserRepository,
                  @RequestParam(required = true) userId: String,
                  model: Model): String {
         return withUserAndPoll(userId, pollId) { user, poll ->
-            model.addAttribute("user", user)
-            model.addAttribute("poll", poll)
-            "polls/vote"
+            getVoteView(user, poll, model)
         }.orElse("auth")
     }
 
@@ -107,14 +92,37 @@ class PollsController(private val userRepository: UserRepository,
                  @RequestParam(name = "option", required = true) itemId: String,
                  model: Model): String {
         return withUserAndPoll(userId, pollId) { user, poll ->
-            voteRepository.findById(itemId).map { vote ->
-                voteRepository.saveVote(user, poll, itemId)
+            poll.getPollItem(itemId).map { pollItem ->
+                voteRepository.save(Vote(null, user, poll, pollItem))
             }
-            model.addAttribute("user", user)
-            model.addAttribute("poll", poll)
-            model.addAttribute("votes", voteRepository.getVotes(poll))
-            "polls/statistics"
+            getPollStatisticsView(user, poll, model)
         }.orElse("auth")
+    }
+
+    private fun getPollEditView(user: User, poll: Poll?, model: Model): String {
+        model.addAttribute("addOperation", poll == null)
+        model.addAttribute("user", user)
+        model.addAttribute("poll", poll)
+        return "polls/edit"
+    }
+
+    private fun getVoteView(user: User, poll: Poll, model: Model): String {
+        model.addAttribute("user", user)
+        model.addAttribute("poll", poll)
+        return "polls/vote"
+    }
+
+    private fun getPollStatisticsView(user: User, poll: Poll, model: Model): String {
+        model.addAttribute("user", user)
+        model.addAttribute("poll", poll)
+        model.addAttribute("votes", voteRepository.getVotes(poll))
+        return "polls/statistics"
+    }
+
+    private fun getPollsListView(user: User, model: Model): String {
+        model.addAttribute("user", user)
+        model.addAttribute("polls", pollRepository.findAll())
+        return "polls/list"
     }
 
     private fun <T> withUser(userId: String, block: (user: User) -> T): Optional<T> {
