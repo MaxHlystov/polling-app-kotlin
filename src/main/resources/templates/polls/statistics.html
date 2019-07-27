@@ -9,7 +9,7 @@
 <body>
 <h3>Voting results for the &quot;<span th:text="${poll.title}" th:remove="tag">empty</span>&quot; poll.</h3>
 
-<table class="polls" th:if="${polls.size() > 0}">
+<table class="vote" th:if="${votesCount?.size()?:0 > 0}">
     <thead>
     <tr>
         <th>Title</th>
@@ -18,8 +18,8 @@
     </thead>
     <tbody>
     <tr th:each="voteCount : ${votesCount}">
-        <td th:text="${voteCount.pollItem.title}">Poll item</td>
-        <td th:text="${voteCount.count}">0</td>
+        <td th:text="${voteCount.pollItem?.title}">Poll item</td>
+        <td th:text="${voteCount.total}">0</td>
     </tr>
     </tbody>
 </table>

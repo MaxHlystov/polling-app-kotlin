@@ -93,7 +93,8 @@ class PollsController(private val userRepository: UserRepository,
                  model: Model): String {
         return withUserAndPoll(userId, pollId) { user, poll ->
             poll.getPollItem(itemId).map { pollItem ->
-                voteRepository.save(Vote(null, user, poll, pollItem))
+                val vote = voteRepository.save(Vote(null, user, poll, pollItem))
+                val a = 5
             }
             getPollStatisticsView(user, poll, model)
         }.orElse("auth")
@@ -109,6 +110,8 @@ class PollsController(private val userRepository: UserRepository,
     private fun getVoteView(user: User, poll: Poll, model: Model): String {
         model.addAttribute("user", user)
         model.addAttribute("poll", poll)
+        model.addAttribute("vote",
+                voteRepository.findAllByPollAndUser(poll, user).getOrNull(0))
         return "polls/vote"
     }
 

@@ -15,7 +15,7 @@
     <h4>Select option you want to vote:</h4>
 
     <div th:each="item : ${poll?.items}">
-        <input type="radio" name="option" th:value="${item.id}">
+        <input type="radio" name="option" th:value="${item.id}" th:checked="${vote?.pollItem?.id == item.id}">
         <span th:text="${item?.title}">option</span><br>
     </div>
 

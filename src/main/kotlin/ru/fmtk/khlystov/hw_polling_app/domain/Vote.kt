@@ -8,4 +8,4 @@ import org.springframework.data.mongodb.core.mapping.Document
 data class Vote(@Id var id: String?,
                  @DBRef val user: User,
                  @DBRef val poll: Poll,
-                 @DBRef val pollItem: PollItem)
+                 val pollItem: PollItem)

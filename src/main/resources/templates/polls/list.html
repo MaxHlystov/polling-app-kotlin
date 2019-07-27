@@ -10,7 +10,7 @@
 
 <h3>Polls created by <span th:text="${user.name}" th:remove="tag">user</span>.</h3>
 
-<table class="polls" th:if="${polls.size() > 0}">
+<table class="polls" th:if="${polls?.size()?:0 > 0}">
     <thead>
     <tr>
         <th>Title</th>
@@ -20,13 +20,13 @@
     <tbody>
     <tr th:each="poll : ${polls}">
         <td>
-            <a href="/polls/vote.html" th:href="@{/polls/vote(pollId=${poll.id}, userId=${user.id})}"
+            <a href="/polls/vote" th:href="@{/polls/vote(pollId=${poll.id}, userId=${user.id})}"
                th:text="${poll.title}">Any poll</a>
         </td>
         <td>
             <div th:if="${user} == ${poll.owner}">
-                <a class="btn btn-primary" role="button" href="/polls/edit.html" th:href="@{/polls/edit(pollId=${poll.id}, userId=${user.id})}">Edit</a>
-                <a class="btn btn-primary" role="button" href="/polls/list.html" th:href="@{/polls/delete(pollId=${poll.id}, userId=${user.id})}">Delete</a>
+                <a class="btn btn-primary" role="button" href="/polls/edit" th:href="@{/polls/edit(pollId=${poll.id}, userId=${user.id})}">Edit</a>
+                <a class="btn btn-primary" role="button" href="/polls/list" th:href="@{/polls/delete(pollId=${poll.id}, userId=${user.id})}">Delete</a>
             </div>
         </td>
     </tr>
