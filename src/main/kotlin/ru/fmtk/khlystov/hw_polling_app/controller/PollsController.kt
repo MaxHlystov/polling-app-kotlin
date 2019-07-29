@@ -26,7 +26,7 @@ class PollsController(private val userRepository: UserRepository,
                 model: Model): String {
         return withUser(userId) { user ->
             getPollEditView(user, null, model)
-        }.orElse("auth")
+        }.orElseGet(this::getAuthView)
     }
 
     @RequestMapping("/polls/list")
@@ -34,7 +34,7 @@ class PollsController(private val userRepository: UserRepository,
                   model: Model): String {
         return withUser(userId) { user ->
             getPollsListView(user, model)
-        }.orElse("auth")
+        }.orElseGet(this::getAuthView)
     }
 
     @GetMapping("/polls/edit")
@@ -48,7 +48,7 @@ class PollsController(private val userRepository: UserRepository,
             } else {
                 getPollsListView(user, model)
             }
-        }.orElse("auth")
+        }.orElseGet(this::getAuthView)
     }
 
     @PostMapping("/polls/save")
@@ -64,7 +64,7 @@ class PollsController(private val userRepository: UserRepository,
             var poll = Poll(pollId, title, user, pollItems)
             poll = pollRepository.save(poll)
             getVoteView(user, poll, model)
-        }.orElse("auth")
+        }.orElseGet(this::getAuthView)
     }
 
     @RequestMapping("/polls/delete")
@@ -74,7 +74,7 @@ class PollsController(private val userRepository: UserRepository,
         return withUserAndPoll(userId, pollId) { user, poll ->
             pollRepository.delete(poll)
             getPollsListView(user, model)
-        }.orElse("auth")
+        }.orElseGet(this::getAuthView)
     }
 
     @GetMapping("/polls/vote")
@@ -83,7 +83,7 @@ class PollsController(private val userRepository: UserRepository,
                  model: Model): String {
         return withUserAndPoll(userId, pollId) { user, poll ->
             getVoteView(user, poll, model)
-        }.orElse("auth")
+        }.orElseGet(this::getAuthView)
     }
 
     @PostMapping("/polls/vote")
@@ -97,7 +97,11 @@ class PollsController(private val userRepository: UserRepository,
                 val a = 5
             }
             getPollStatisticsView(user, poll, model)
-        }.orElse("auth")
+        }.orElseGet(this::getAuthView)
+    }
+
+    private fun getAuthView(): String {
+        return "redirect:/auth"
     }
 
     private fun getPollEditView(user: User, poll: Poll?, model: Model): String {
