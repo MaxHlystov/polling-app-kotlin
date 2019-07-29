@@ -14,16 +14,16 @@
     <input type="hidden" name="pollId" th:value="${poll.id}">
     <h4>Select option you want to vote:</h4>
 
-    <div th:each="item : ${poll?.items}">
+    <div class="m-1" th:each="item : ${poll?.items}">
         <input type="radio" name="option" th:value="${item.id}" th:checked="${vote?.pollItem?.id == item.id}">
-        <span th:text="${item?.title}">option</span><br>
+        <span th:text="${item?.title}" th:remove="tag">option</span><br>
     </div>
 
-    <input class="btn btn-primary" role="button" type="submit" value="Save and close"/>
-    <a class="btn btn-primary" role="button" th:href="@{/polls/list(userId=${user.id})}">Cancel</a>
+    <input class="btn btn-primary m-1" role="button" type="submit" value="Save and close"/>
+    <a class="btn btn-primary m-1" role="button" th:href="@{/polls/list(userId=${user.id})}">Cancel</a>
 </form>
 
-<a class="btn btn-primary" role="button" th:href="@{/polls/list(userId=${user.id})}">Return to the main list of
+<a class="btn btn-primary m-1" role="button" th:href="@{/polls/list(userId=${user.id})}">Return to the main list of
     polls</a>
 </body>
 </html>

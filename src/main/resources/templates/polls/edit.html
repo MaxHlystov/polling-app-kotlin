@@ -26,9 +26,10 @@
 
 <form action="/polls/save" method="post">
     <input type="hidden" name="userId" th:value="${user.id}"/>
+    <input th:if="${!addOperation}" type="hidden" name="pollId" th:value="${poll.id}">
+
     <label for="title">Poll title</label>
     <input type="text" id="title" name="title" th:value="${addOperation}? '' : ${poll.title}"/>
-    <input th:if="${!addOperation}" type="hidden" name="pollId" th:value="${poll.id}">
     <h4>Options to vote:</h4>
     <ol id="container">
         <div th:if="${!addOperation}" th:remove="tag">

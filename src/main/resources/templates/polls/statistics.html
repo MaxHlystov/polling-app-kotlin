@@ -18,8 +18,8 @@
     </thead>
     <tbody>
     <tr th:each="voteCount : ${votesCount}">
-        <td th:text="${voteCount.pollItem?.title}">Poll item</td>
-        <td th:text="${voteCount.total}">0</td>
+        <td class="m-1" th:text="${voteCount.pollItem?.title}">Poll item</td>
+        <td class="m-1" th:text="${voteCount.total}">0</td>
     </tr>
     </tbody>
 </table>
