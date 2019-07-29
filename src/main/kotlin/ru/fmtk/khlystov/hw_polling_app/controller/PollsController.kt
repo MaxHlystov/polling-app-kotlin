@@ -3,10 +3,8 @@ package ru.fmtk.khlystov.hw_polling_app.controller
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.util.MultiValueMap
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.MissingServletRequestParameterException
+import org.springframework.web.bind.annotation.*
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
 import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
 import ru.fmtk.khlystov.hw_polling_app.domain.User
@@ -100,8 +98,13 @@ class PollsController(private val userRepository: UserRepository,
         }.orElseGet(this::getAuthView)
     }
 
+    @ExceptionHandler(MissingServletRequestParameterException::class)
+    fun handleMissingParameter(ex: MissingServletRequestParameterException): String {
+        return getAuthView()
+    }
+
     private fun getAuthView(): String {
-        return "redirect:/auth"
+        return "redirect:/"
     }
 
     private fun getPollEditView(user: User, poll: Poll?, model: Model): String {
