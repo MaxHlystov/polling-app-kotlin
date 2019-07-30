@@ -135,17 +135,17 @@ class PollsController(private val userRepository: UserRepository,
         return "polls/list"
     }
 
-    private fun <T> withUser(userId: String, block: (user: User) -> T): Optional<T> {
+    private fun <T> withUser(userId: String, block: (user: User) -> T?): Optional<T> {
         return userRepository.findById(userId).map(block)
     }
 
     private fun <T> withUserAndPoll(userId: String,
                                     pollId: String,
-                                    block: (user: User, poll: Poll) -> T): Optional<T> {
+                                    block: (user: User, poll: Poll) -> T?): Optional<T> {
         return withUser(userId) { user ->
             pollRepository.findById(pollId).map { poll ->
                 block(user, poll)
-            }.get()
+            }.orElse(null)
         }
     }
 }
