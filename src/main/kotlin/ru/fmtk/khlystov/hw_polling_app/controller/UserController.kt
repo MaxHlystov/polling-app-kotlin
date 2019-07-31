@@ -14,7 +14,7 @@ class UserController(private val userRepository: UserRepository) {
     fun userAuth(@RequestParam(required = true) userName: String): String {
         val user: User = userRepository.findByName(userName)
                 ?: userRepository.save(User(userName))
-        return "redirect:/polls/list?userId=${user.id}"
+        return user.id ?: ""
     }
 
 }
