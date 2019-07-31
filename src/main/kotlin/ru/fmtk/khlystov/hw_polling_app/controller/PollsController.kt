@@ -1,6 +1,5 @@
 package ru.fmtk.khlystov.hw_polling_app.controller
 
-import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.util.MultiValueMap
 import org.springframework.web.bind.MissingServletRequestParameterException
@@ -14,7 +13,7 @@ import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.VoteRepository
 import java.util.*
 
-@Controller
+@RestController
 class PollsController(private val userRepository: UserRepository,
                       private val pollRepository: PollRepository,
                       private val voteRepository: VoteRepository) {

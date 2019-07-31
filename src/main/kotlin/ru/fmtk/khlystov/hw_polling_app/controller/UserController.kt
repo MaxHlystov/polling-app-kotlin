@@ -1,13 +1,13 @@
 package ru.fmtk.khlystov.hw_polling_app.controller
 
-import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 
 
-@Controller
+@RestController
 class UserController(private val userRepository: UserRepository) {
 
     @PostMapping("auth")

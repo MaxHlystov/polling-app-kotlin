@@ -16,3 +16,7 @@ These items need to be done in hw1:
 - Create and choose user without authentication.
 - Creating and changing of polls.
 - Voting in any poll.
+
+
+### Home work #2
+Split application on two parts: backend and frontend.
