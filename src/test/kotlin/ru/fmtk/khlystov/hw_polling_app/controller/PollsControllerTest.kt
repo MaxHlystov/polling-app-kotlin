@@ -1,6 +1,7 @@
 package ru.fmtk.khlystov.hw_polling_app.controller
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -67,49 +68,10 @@ internal class PollsControllerTest {
     }
 
     @Test
-    @DisplayName("Open add poll view for trusted user when adding a poll")
-    fun openAddPollViewForTrustedUserrWhenAddingPoll() {
-        val res = pollsController.addPoll(trustedUserId, model)
-        verify(model).addAttribute("addOperation", true)
-        verify(model).addAttribute("user", trustedUser)
-        assertEquals("polls/edit", res)
+    @DisplayName("Getting a list of polls ")
+    fun getingPolls() {
+        val res = pollsController.listPolls(trustedUserId)
+        assertSame(listOf(trustedUser), res)
     }
 
-    @Test
-    @DisplayName("Open authentication view for not trusted user when adding a poll")
-    fun openAuthViewForNotTrustedUserWhenAddingPoll() {
-        val res = pollsController.editPoll(notValidPollId, notTrustedUserId, model)
-        assertEquals("redirect:/", res)
-    }
-
-    @Test
-    @DisplayName("Open authentication view for not trusted user when editing not valid poll")
-    fun openAuthViewForNotTrustedUserAndNotValidPollWhenEditingPoll() {
-        val res = pollsController.editPoll(notValidPollId, notTrustedUserId, model)
-        assertEquals("redirect:/", res)
-    }
-
-    @Test
-    @DisplayName("Open authentication view for not trusted user when editing a valid poll")
-    fun openAuthViewForNotTrustedUserAndValidPollWhenEditingPoll() {
-        val res = pollsController.editPoll(validPollId, notTrustedUserId, model)
-        assertEquals("redirect:/", res)
-    }
-
-    @Test
-    @DisplayName("Open authentication view for trusted user when editing not valid poll")
-    fun openAuthViewForTrustedUserAndNotValidPollWhenEditingPoll() {
-        val res = pollsController.editPoll(notValidPollId, trustedUserId, model)
-        assertEquals("redirect:/", res)
-    }
-
-    @Test
-    @DisplayName("Open edit poll view for trusted user when editing a valid poll")
-    fun openEditPollForTrustedUserAndValidPollWhenEditingPoll() {
-        val res = pollsController.editPoll(validPollId, trustedUserId, model)
-        verify(model).addAttribute("addOperation", false)
-        verify(model).addAttribute("user", trustedUser)
-        verify(model).addAttribute("poll", validPoll)
-        assertEquals("polls/edit", res)
-    }
 }

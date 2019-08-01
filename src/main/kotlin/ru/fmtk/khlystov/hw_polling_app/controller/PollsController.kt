@@ -4,6 +4,7 @@ import org.springframework.ui.Model
 import org.springframework.util.MultiValueMap
 import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.*
+import ru.fmtk.khlystov.hw_polling_app.controller.dto.PollDTO
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
 import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
 import ru.fmtk.khlystov.hw_polling_app.domain.User
@@ -19,24 +20,19 @@ class PollsController(private val userRepository: UserRepository,
 
     @PostMapping("/polls")
     fun addPoll(@RequestParam(required = true) userId: String,
-                @RequestParam pollId: String?,
-                @RequestParam(required = true) title: String,
-                @RequestParam values: MultiValueMap<String, String>): String {
+                @RequestParam(required = true) pollDTO: PollDTO): String {
         return withUser(userId) { user ->
-            val pollItems = values.filter { (key, _) -> key.startsWith("option") }
-                    .flatMap { (_, s) -> s }
-                    .filter(String::isNotEmpty).map { title -> PollItem(null, title) }
-            var poll = Poll(pollId, title, user, pollItems)
+            var poll = Poll(pollDTO.id, pollDTO.title, user, pollDTO.items.map { pollItemDTO -> PollItem(pollItemDTO.id, pollItemDTO.title) })
             pollRepository.save(poll)
             "ok"
         }.orElse("error adding a poll")
     }
 
     @GetMapping("/polls")
-    fun listPolls(@RequestParam(required = true) userId: String): List<Poll> {
+    fun listPolls(@RequestParam(required = true) userId: String): List<PollDTO> {
         return withUser(userId) { _ ->
-            pollRepository.findAll()
-        }.orElseGet { ArrayList<Poll>() }
+            pollRepository.findAll().map(::PollDTO)
+        }.orElseGet { ArrayList<PollDTO>() }
     }
 
     @PutMapping("/polls")
