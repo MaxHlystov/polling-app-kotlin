@@ -1,12 +1,11 @@
 package ru.fmtk.khlystov.hw_polling_app.controller
 
-import org.springframework.ui.Model
-import org.springframework.util.MultiValueMap
-import org.springframework.web.bind.MissingServletRequestParameterException
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.server.ResponseStatusException
+import ru.fmtk.khlystov.hw_polling_app.controller.dto.AddOrEditRequestDTO
 import ru.fmtk.khlystov.hw_polling_app.controller.dto.PollDTO
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
-import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
@@ -19,59 +18,70 @@ class PollsController(private val userRepository: UserRepository,
                       private val voteRepository: VoteRepository) {
 
     @PostMapping("/polls")
-    fun addPoll(@RequestParam(required = true) userId: String,
-                @RequestParam(required = true) pollDTO: PollDTO): String {
+    fun addPoll(@RequestBody(required = true) request: AddOrEditRequestDTO): PollDTO {
+        val (userId, pollDTO) = request
         return withUser(userId) { user ->
-            var poll = Poll(pollDTO.id, pollDTO.title, user, pollDTO.items.map { pollItemDTO -> PollItem(pollItemDTO.id, pollItemDTO.title) })
-            pollRepository.save(poll)
-            "ok"
-        }.orElse("error adding a poll")
+            val poll = pollDTO.toPoll(user)
+            PollDTO(pollRepository.save(poll))
+        }.orElseThrow {
+            ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when adding a poll.")
+        }
     }
 
     @GetMapping("/polls")
     fun listPolls(@RequestParam(required = true) userId: String): List<PollDTO> {
-        return withUser(userId) { _ ->
-            pollRepository.findAll().map(::PollDTO)
-        }.orElseGet { ArrayList<PollDTO>() }
+        return withUser(userId) { pollRepository.findAll().map(::PollDTO) }
+                .orElseThrow {
+                    ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when getting a list of polls.")
+                }
     }
 
     @PutMapping("/polls")
-    fun editPoll(@RequestParam(required = true) pollId: String,
-                 @RequestParam(required = true) userId: String): String {
+    fun editPoll(@RequestBody(required = true) request: AddOrEditRequestDTO): PollDTO {
+        val (userId, pollDTO) = request
+        val pollId = pollDTO.id
+        if (pollId == null) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Poll id was not specify.")
+        }
         return withUserAndPoll(userId, pollId) { user, poll ->
             if (poll.owner.id == userId) {
-                "ok"
+                val newPoll = pollDTO.toPoll(user)
+                PollDTO(pollRepository.save(newPoll))
             } else {
-                null
+                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "You can't edit a poll isn't belonged to you.")
             }
-        }.orElse("error editing")
+        }.orElseThrow {
+            ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error editing the poll.")
+        }
     }
 
     @DeleteMapping("/polls")
     fun deletePoll(@RequestParam(required = true) pollId: String,
-                   @RequestParam(required = true) userId: String): String {
+                   @RequestParam(required = true) userId: String) {
         return withUserAndPoll(userId, pollId) { user, poll ->
             pollRepository.delete(poll)
-            "ok"
-        }.orElse("error deleting")
-    }
-
-    @ExceptionHandler(MissingServletRequestParameterException::class)
-    fun handleMissingParameter(ex: MissingServletRequestParameterException): String {
-        return "error 1234"
+        }.orElseThrow {
+            ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting a poll.")
+        }
     }
 
     private fun <T> withUser(userId: String, block: (user: User) -> T?): Optional<T> {
-        return userRepository.findById(userId).map(block)
+        val optUser = userRepository.findById(userId)
+        if (optUser.isEmpty) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't find a poll.")
+        }
+        return return optUser.map(block)
     }
 
     private fun <T> withUserAndPoll(userId: String,
                                     pollId: String,
                                     block: (user: User, poll: Poll) -> T?): Optional<T> {
         return withUser(userId) { user ->
-            pollRepository.findById(pollId).map { poll ->
-                block(user, poll)
-            }.orElse(null)
+            val optPoll = pollRepository.findById(pollId)
+            if (optPoll.isEmpty) {
+                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't find a poll.")
+            }
+            block(user, optPoll.get())
         }
     }
 }
