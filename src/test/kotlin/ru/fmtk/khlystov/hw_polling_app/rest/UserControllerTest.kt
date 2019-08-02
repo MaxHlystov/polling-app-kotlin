@@ -1,9 +1,9 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.BDDMockito.given
 import org.springframework.beans.factory.annotation.Autowired
@@ -56,7 +56,7 @@ internal class UserControllerTest {
         val newUser = User(null, newUserName)
         given(userRepository.save(newUser))
                 .willReturn(newUser)
-        assertThrows(ResponseStatusException::class.java) {
+        assertThrows<ResponseStatusException> {
             userController.userAuth(newUserName)
         }
     }

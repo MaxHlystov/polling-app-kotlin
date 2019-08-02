@@ -59,7 +59,11 @@ class PollsController(private val userRepository: UserRepository,
     fun deletePoll(@RequestParam(required = true) pollId: String,
                    @RequestParam(required = true) userId: String) {
         return withUserAndPoll(userId, pollId) { user, poll ->
-            pollRepository.delete(poll)
+            if(user.id == poll.owner.id) {
+                pollRepository.delete(poll)
+            } else {
+                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "You can't delete a poll isn't belonged to you.")
+            }
         }.orElseThrow {
             ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error deleting a poll.")
         }
