@@ -1,4 +1,4 @@
-package ru.fmtk.khlystov.hw_polling_app.controller
+package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
-import ru.fmtk.khlystov.hw_polling_app.controller.dto.VoteDTO
-import ru.fmtk.khlystov.hw_polling_app.controller.dto.VotesCountDTO
+import ru.fmtk.khlystov.hw_polling_app.rest.dto.VoteDTO
+import ru.fmtk.khlystov.hw_polling_app.rest.dto.VotesCountDTO
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.domain.Vote
@@ -21,7 +21,7 @@ class VoteController(private val userRepository: UserRepository,
                      private val pollRepository: PollRepository,
                      private val voteRepository: VoteRepository) {
 
-    @GetMapping("/polls/votes")
+    @GetMapping("/votes")
     fun votePoll(@RequestParam(required = true) pollId: String,
                  @RequestParam(required = true) userId: String): List<VoteDTO> {
         return withUserAndPoll(userId, pollId) { user, poll ->
@@ -31,7 +31,7 @@ class VoteController(private val userRepository: UserRepository,
         }
     }
 
-    @GetMapping("/polls/votes/statistics")
+    @GetMapping("/votes/statistics")
     fun statistics(@RequestParam(required = true) pollId: String,
                    @RequestParam(required = true) userId: String): List<VotesCountDTO> {
         return withUserAndPoll(userId, pollId) { _, poll ->
@@ -42,7 +42,7 @@ class VoteController(private val userRepository: UserRepository,
                 }
     }
 
-    @PostMapping("/polls/votes")
+    @PostMapping("/votes")
     fun vote(@RequestParam(required = true) pollId: String,
              @RequestParam(required = true) userId: String,
              @RequestParam(name = "option", required = true) itemId: String): VoteDTO {

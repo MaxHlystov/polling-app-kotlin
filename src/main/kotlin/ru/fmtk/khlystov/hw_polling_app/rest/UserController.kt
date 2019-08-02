@@ -1,4 +1,4 @@
-package ru.fmtk.khlystov.hw_polling_app.controller
+package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.PostMapping

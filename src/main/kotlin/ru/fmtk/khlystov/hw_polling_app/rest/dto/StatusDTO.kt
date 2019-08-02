@@ -1,4 +1,4 @@
-package ru.fmtk.khlystov.hw_polling_app.controller.dto
+package ru.fmtk.khlystov.hw_polling_app.rest.dto
 
 class StatusDTO(val ok: Boolean, val description: String) {
     companion object {

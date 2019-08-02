@@ -1,4 +1,4 @@
-package ru.fmtk.khlystov.hw_polling_app.controller.dto
+package ru.fmtk.khlystov.hw_polling_app.rest.dto
 
 import org.springframework.data.annotation.Id
 import ru.fmtk.khlystov.hw_polling_app.domain.PollItem

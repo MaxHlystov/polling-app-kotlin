@@ -1,10 +1,10 @@
-package ru.fmtk.khlystov.hw_polling_app.controller
+package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
-import ru.fmtk.khlystov.hw_polling_app.controller.dto.AddOrEditRequestDTO
-import ru.fmtk.khlystov.hw_polling_app.controller.dto.PollDTO
+import ru.fmtk.khlystov.hw_polling_app.rest.dto.AddOrEditRequestDTO
+import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository

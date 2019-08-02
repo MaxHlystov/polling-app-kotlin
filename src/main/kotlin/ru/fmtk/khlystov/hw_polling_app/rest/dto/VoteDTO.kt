@@ -1,9 +1,8 @@
-package ru.fmtk.khlystov.hw_polling_app.controller.dto
+package ru.fmtk.khlystov.hw_polling_app.rest.dto
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.DBRef
 import org.springframework.data.mongodb.core.mapping.Document
-import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
 import ru.fmtk.khlystov.hw_polling_app.domain.Vote
 
 @Document

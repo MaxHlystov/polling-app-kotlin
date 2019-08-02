@@ -1,4 +1,4 @@
-package ru.fmtk.khlystov.hw_polling_app.controller
+package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DisplayName
