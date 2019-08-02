@@ -1,6 +1,7 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.junit.jupiter.SpringExtension
+import org.springframework.web.server.ResponseStatusException
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 
@@ -27,11 +29,10 @@ internal class UserControllerTest {
     fun savedUserAuth() {
         val trustedUserName = "StoredInDB"
         val testId = "123456789"
-        val redirectString = "redirect:/polls/list?userId=$testId"
         given(userRepository.findByName(trustedUserName))
                 .willReturn(User(testId, trustedUserName))
         val view = userController.userAuth(trustedUserName)
-        Assertions.assertEquals(redirectString, view)
+        Assertions.assertEquals(testId, view)
     }
 
     @Test
@@ -40,12 +41,25 @@ internal class UserControllerTest {
         val newUserName = "NewInDB"
         val testId = "123456789"
         val newUser = User(testId, newUserName)
-        val redirectString = "redirect:/polls/list?userId=$testId"
         given(userRepository.findByName(newUserName))
                 .willReturn(null)
         given(userRepository.save(User(newUserName)))
                 .willReturn(newUser)
-        val view = userController.userAuth(newUserName)
-        Assertions.assertEquals(redirectString, view)
+        val userId = userController.userAuth(newUserName)
+        Assertions.assertEquals(testId, userId)
     }
+
+    @Test
+    @DisplayName("Exception if error when saving a user")
+    fun exceptionIfErrorSave() {
+        val newUserName = "Name of user not in DB"
+        val newUser = User(null, newUserName)
+        given(userRepository.save(newUser))
+                .willReturn(newUser)
+        assertThrows(ResponseStatusException::class.java) {
+            userController.userAuth(newUserName)
+        }
+    }
+
+
 }
