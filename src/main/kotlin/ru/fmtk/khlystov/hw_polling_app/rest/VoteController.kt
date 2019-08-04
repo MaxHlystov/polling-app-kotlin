@@ -27,7 +27,7 @@ class VoteController(private val userRepository: UserRepository,
         return withUserAndPoll(userId, pollId) { user, poll ->
             voteRepository.findAllByPollAndUser(poll, user).map(::VoteDTO)
         }.orElseThrow {
-            ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error getting votes of the poll.")
+            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error getting votes of the poll.")
         }
     }
 
