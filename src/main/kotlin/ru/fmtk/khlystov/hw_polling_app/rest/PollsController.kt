@@ -12,6 +12,7 @@ import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.VoteRepository
 import java.util.*
 
+@CrossOrigin
 @RestController
 class PollsController(private val userRepository: UserRepository,
                       private val pollRepository: PollRepository,

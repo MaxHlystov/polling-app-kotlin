@@ -1,26 +1,28 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
+import ru.fmtk.khlystov.hw_polling_app.rest.dto.UserDTO
 
 
 @RestController
 class UserController(private val userRepository: UserRepository) {
 
+    @CrossOrigin
     @PostMapping("auth")
-    fun userAuth(@RequestParam(required = true) userName: String): String {
+    fun userAuth(@RequestBody(required = true) userName: String): UserDTO {
         val user: User = userRepository.findByName(userName)
                 ?: userRepository.save(User(userName))
-        val id = user.id
-        if (id == null) {
+        if (user.id == null) {
             throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving user.")
         }
-        return id
+        return UserDTO(user)
     }
 
 }
