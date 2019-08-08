@@ -6,12 +6,9 @@ import java.util.*
 
 data class PollDTO(var id: String?,
                    val title: String,
-                   val items: List<PollItemDTO>) {
-    constructor(poll: Poll) : this(poll.id, poll.title, poll.items.map(::PollItemDTO))
+                   val items: List<PollItemDTO>,
+                   val editable: Boolean) {
+    constructor(poll: Poll, editable: Boolean) : this(poll.id, poll.title, poll.items.map(::PollItemDTO), editable)
 
     fun toPoll(user: User): Poll = Poll(id, title, user, items.map(PollItemDTO::toPollItem))
-
-    fun getPollItem(id: String): Optional<PollItemDTO> {
-        return Optional.ofNullable(items.asSequence().firstOrNull { pollItem -> pollItem.id == id })
-    }
 }

@@ -10,5 +10,9 @@ data class VoteDTO(@Id var id: String?,
                    @DBRef val userId: String?,
                    @DBRef val poll: PollDTO,
                    val pollItem: PollItemDTO) {
-    constructor(vote: Vote): this(vote.id, vote.user.id, PollDTO(vote.poll), PollItemDTO(vote.pollItem))
+    constructor(vote: Vote) : this(
+            vote.id,
+            vote.user.id,
+            PollDTO(vote.poll, vote.poll.owner.id == vote.user.id),
+            PollItemDTO(vote.pollItem))
 }
