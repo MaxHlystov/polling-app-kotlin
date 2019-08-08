@@ -80,7 +80,7 @@ internal class PollsControllerTest {
     @DisplayName("Get list of polls")
     fun gettingPolls() {
         val res = pollsController.listPolls(trustedUserId)
-        assertEquals(validPolls.map(::PollDTO), res)
+        assertEquals(validPolls.map { poll -> PollDTO(poll, false) }, res)
     }
 
     @Test
@@ -90,9 +90,9 @@ internal class PollsControllerTest {
         val newPollSaved = Poll("123", "New poll", trustedUser, genPollItems(4))
         given(pollRepository.save(newPoll))
                 .willReturn(newPollSaved)
-        val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(newPoll))
+        val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(newPoll, true))
         val res = pollsController.addPoll(addingRequest)
-        assertEquals(PollDTO(newPollSaved), res)
+        assertEquals(PollDTO(newPollSaved, true), res)
     }
 
     @Test
@@ -104,9 +104,9 @@ internal class PollsControllerTest {
                 .willReturn(Optional.ofNullable(poll))
         given(pollRepository.save(poll))
                 .willReturn(pollSaved)
-        val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(poll))
+        val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(poll, true))
         val res = pollsController.editPoll(addingRequest)
-        assertEquals(PollDTO(pollSaved), res)
+        assertEquals(PollDTO(pollSaved, true), res)
     }
 
     @Test
@@ -116,7 +116,7 @@ internal class PollsControllerTest {
                 genPollItems(4))
         given(pollRepository.findById("123"))
                 .willReturn(Optional.ofNullable(poll))
-        val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(poll))
+        val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(poll, true))
         assertThrows<ResponseStatusException> { pollsController.editPoll(addingRequest) }
     }
 
@@ -127,7 +127,7 @@ internal class PollsControllerTest {
         val newPollSaved = Poll("123", "New poll", trustedUser, genPollItems(4))
         given(pollRepository.save(newPoll))
                 .willReturn(newPollSaved)
-        val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(newPoll))
+        val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(newPoll, true))
         assertThrows<ResponseStatusException> { pollsController.editPoll(addingRequest) }
     }
 

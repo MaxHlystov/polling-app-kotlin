@@ -3,13 +3,13 @@ package ru.fmtk.khlystov.hw_polling_app.rest
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
-import ru.fmtk.khlystov.hw_polling_app.rest.dto.AddOrEditRequestDTO
-import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.VoteRepository
+import ru.fmtk.khlystov.hw_polling_app.rest.dto.AddOrEditRequestDTO
+import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
 import java.util.*
 
 @CrossOrigin
@@ -23,7 +23,7 @@ class PollsController(private val userRepository: UserRepository,
         val (userId, pollDTO) = request
         return withUser(userId) { user ->
             val poll = pollDTO.toPoll(user)
-            PollDTO(pollRepository.save(poll))
+            PollDTO(pollRepository.save(poll), user.id == poll.owner.id)
         }.orElseThrow {
             ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when adding a poll.")
         }
@@ -31,7 +31,11 @@ class PollsController(private val userRepository: UserRepository,
 
     @GetMapping("/polls")
     fun listPolls(@RequestParam(required = true) userId: String): List<PollDTO> {
-        return withUser(userId) { pollRepository.findAll().map(::PollDTO) }
+        return withUser(userId) {
+            pollRepository.findAll().map { poll ->
+                PollDTO(poll, userId == poll.owner.id)
+            }
+        }
                 .orElseThrow {
                     ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when getting a list of polls.")
                 }
@@ -47,7 +51,7 @@ class PollsController(private val userRepository: UserRepository,
         return withUserAndPoll(userId, pollId) { user, poll ->
             if (poll.owner.id == userId) {
                 val newPoll = pollDTO.toPoll(user)
-                PollDTO(pollRepository.save(newPoll))
+                PollDTO(pollRepository.save(newPoll), true)
             } else {
                 throw ResponseStatusException(HttpStatus.BAD_REQUEST, "You can't edit a poll isn't belonged to you.")
             }
@@ -60,7 +64,7 @@ class PollsController(private val userRepository: UserRepository,
     fun deletePoll(@RequestParam(required = true) pollId: String,
                    @RequestParam(required = true) userId: String) {
         return withUserAndPoll(userId, pollId) { user, poll ->
-            if(user.id == poll.owner.id) {
+            if (user.id == poll.owner.id) {
                 pollRepository.delete(poll)
             } else {
                 throw ResponseStatusException(HttpStatus.BAD_REQUEST, "You can't delete a poll isn't belonged to you.")
