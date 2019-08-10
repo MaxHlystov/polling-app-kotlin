@@ -25,7 +25,7 @@ class PollsController(private val userRepository: UserRepository,
             val poll = pollDTO.toPoll(user)
             PollDTO(pollRepository.save(poll), user.id == poll.owner.id)
         }.orElseThrow {
-            ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when adding a poll.")
+            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when adding a poll.")
         }
     }
 
