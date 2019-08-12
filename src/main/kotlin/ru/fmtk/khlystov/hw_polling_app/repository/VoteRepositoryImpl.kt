@@ -36,12 +36,14 @@ open class VoteRepositoryImpl(private val mongoTemplate: ReactiveMongoTemplate) 
                 match(Criteria.where("poll.\$id").`is`(ObjectId(poll.id))),
                 group("pollItem").count().`as`("total"),
                 project("total").and("pollItem").previousOperation())
-        val votesFound = mongoTemplate.aggregate(agg, Vote::class.java, VotesCount::class.java)
-                .mappedResults
-        // We expect, there will be not greater than 100 poll items, so O(n^2) is not too bad.
-        return poll.items.map { pollItem ->
-            val vote = votesFound.firstOrNull { votesCount -> votesCount.pollItem.id == pollItem.id }
-            VotesCount(pollItem, vote?.total ?: 0)
-        }.toList()
+        return mongoTemplate.aggregate(agg, Vote::class.java, VotesCount::class.java)
+                .collectList()
+                .flatMap { votesFound: List<VotesCount> ->
+                    poll.items.map { pollItem ->
+                        val vote = votesFound.firstOrNull { votesCount -> votesCount.pollItem.id == pollItem.id }
+                        VotesCount(pollItem, vote?.total ?: 0)
+                    }
+                    // We expect, there will be not greater than 100 poll items, so O(n^2) is not too bad.
+                }
     }
 }
