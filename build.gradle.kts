@@ -29,6 +29,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.apache.commons:commons-lang3:3.4")
+    compile("org.springframework:spring-webflux:5.1.6.RELEASE")
     implementation("commons-codec:commons-codec:1.13")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 

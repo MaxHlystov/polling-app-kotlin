@@ -1,31 +1,35 @@
 package ru.fmtk.khlystov.hw_polling_app.repository
 
 import org.bson.types.ObjectId
-import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate
 import org.springframework.data.mongodb.core.aggregation.Aggregation.*
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.transaction.annotation.Transactional
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.core.publisher.toMono
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
 import ru.fmtk.khlystov.hw_polling_app.domain.Vote
 import ru.fmtk.khlystov.hw_polling_app.domain.VotesCount
 
-open class VoteRepositoryImpl(private val mongoTemplate: MongoTemplate) : VoteRepositoryCustom {
+open class VoteRepositoryImpl(private val mongoTemplate: ReactiveMongoTemplate) : VoteRepositoryCustom {
 
     @Transactional
-    override fun save(vote: Vote): Vote {
+    override fun save(vote: Vote): Mono<Vote> {
         val query = Query.query(Criteria().andOperator(
                 Criteria.where("user.\$id").`is`(ObjectId(vote.user.id)),
                 Criteria.where("poll.\$id").`is`(ObjectId(vote.poll.id))))
-        val votes = mongoTemplate.find(query, Vote::class.java)
-        if (votes.size == 0) {
-            return mongoTemplate.save(vote)
-        }
-        val oldVote = votes[0]
-        return mongoTemplate.save(Vote(oldVote.id, oldVote.user, oldVote.poll, vote.pollItem))
+        return mongoTemplate.find(query, Vote::class.java)
+                .toMono()
+                .flatMap { oldVote ->
+                    mongoTemplate.save(Vote(oldVote.id, oldVote.user, oldVote.poll, vote.pollItem))
+                }
+                .switchIfEmpty(mongoTemplate.save(vote).toMono())
+
     }
 
-    override fun getVotes(poll: Poll): List<VotesCount> {
+    override fun getVotes(poll: Poll): Flux<VotesCount> {
         //db.vote.aggregate({ $match: {"poll.$id" : ObjectId("5d3b7851d606dd318817430b") }},
         //                  { $group: {_id: "$pollItem", total: { $sum: 1}}})
         val agg = newAggregation(

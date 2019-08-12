@@ -20,3 +20,8 @@ These items need to be done in hw1:
 
 ### Home work #2
 Split application on two parts: backend and frontend.
+
+
+### Home work #3
+Использовать WebFlux
+Вместо классического потока и embedded Web-сервера использовать WebFlux. 
