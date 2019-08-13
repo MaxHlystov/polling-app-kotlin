@@ -70,8 +70,6 @@ class PollsController(private val userRepository: UserRepository,
                         getMonoHttpError(HttpStatus.BAD_REQUEST,
                                 "You can't delete a poll isn't belonged to you.")
                     }
-                }
-                .switchIfEmpty(getMonoHttpError(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Error deleting a poll."))
+                };
     }
 }
