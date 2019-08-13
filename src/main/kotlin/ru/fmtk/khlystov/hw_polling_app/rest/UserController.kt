@@ -19,7 +19,7 @@ class UserController(private val userRepository: UserRepository) {
     @PostMapping("auth")
     fun userAuth(@RequestParam(required = true) userName: String): Mono<UserDTO> {
         return userRepository.findByName(userName)
-                .switchIfEmpty { () -> userRepository.save(User(userName)) }
+                .switchIfEmpty(userRepository.save(User(userName)))
                 .map { user ->
                     if (user.id == null) {
                         Mono.error<ResponseStatusException>(

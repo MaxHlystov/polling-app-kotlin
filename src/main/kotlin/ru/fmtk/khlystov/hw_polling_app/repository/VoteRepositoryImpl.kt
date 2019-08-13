@@ -10,6 +10,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toMono
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
+import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
 import ru.fmtk.khlystov.hw_polling_app.domain.Vote
 import ru.fmtk.khlystov.hw_polling_app.domain.VotesCount
 
@@ -21,7 +22,7 @@ open class VoteRepositoryImpl(private val mongoTemplate: ReactiveMongoTemplate) 
                 Criteria.where("user.\$id").`is`(ObjectId(vote.user.id)),
                 Criteria.where("poll.\$id").`is`(ObjectId(vote.poll.id))))
         return mongoTemplate.find(query, Vote::class.java)
-                .toMono()
+                .take(1).toMono()
                 .flatMap { oldVote ->
                     mongoTemplate.save(Vote(oldVote.id, oldVote.user, oldVote.poll, vote.pollItem))
                 }
@@ -38,12 +39,14 @@ open class VoteRepositoryImpl(private val mongoTemplate: ReactiveMongoTemplate) 
                 project("total").and("pollItem").previousOperation())
         return mongoTemplate.aggregate(agg, Vote::class.java, VotesCount::class.java)
                 .collectList()
-                .flatMap { votesFound: List<VotesCount> ->
-                    poll.items.map { pollItem ->
-                        val vote = votesFound.firstOrNull { votesCount -> votesCount.pollItem.id == pollItem.id }
-                        VotesCount(pollItem, vote?.total ?: 0)
-                    }
-                    // We expect, there will be not greater than 100 poll items, so O(n^2) is not too bad.
-                }
+                .flatMap( (votesFound: List<VotesCount>) -> {
+            // We expect, there will be not greater than 100 poll items, so O(n^2) is not too bad.
+            poll.items.map { pollItem ->
+                val vote = votesFound.firstOrNull { votesCount -> votesCount.pollItem.id == pollItem.id }
+                VotesCount(pollItem, vote?.total ?: 0)
+            }
+        })
     }
+
+    private fun joinVotesCountWithPollItems(pollItems: List<PollItem>, List<VotesCount>)
 }
