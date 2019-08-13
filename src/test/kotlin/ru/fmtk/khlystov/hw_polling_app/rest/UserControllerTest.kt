@@ -15,7 +15,6 @@ import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.UserDTO
 
-@ExtendWith(SpringExtension::class)
 @WebMvcTest(UserController::class)
 internal class UserControllerTest {
 

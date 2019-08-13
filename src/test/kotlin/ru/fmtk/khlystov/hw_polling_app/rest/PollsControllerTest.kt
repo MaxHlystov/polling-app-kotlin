@@ -21,9 +21,9 @@ import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.VoteRepository
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.AddOrEditRequestDTO
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
+import ru.fmtk.khlystov.hw_polling_app.rest.dto.UserDTO
 import java.util.*
 
-@ExtendWith(SpringExtension::class)
 @WebMvcTest(PollsController::class)
 internal class PollsControllerTest {
 
@@ -44,10 +44,13 @@ internal class PollsControllerTest {
 
     companion object {
         val trustedUserName = "StoredInDB"
+        val trustedUserNameWithoutPolls = "User without polls"
         val trustedUserId = "123456789"
+        val trustedUserIdWithoutPolls = "777777777777"
         val notTrustedUserId = "0000000000"
         val notValidPollId = "0000000000"
         val trustedUser = User(trustedUserId, trustedUserName)
+        val trustedUserWithoutPolls = User(trustedUserIdWithoutPolls, trustedUserNameWithoutPolls)
         val validPolls = generateSequence(1000) { i -> i + 1 }
                 .take(4)
                 .map(Int::toString)
@@ -66,6 +69,8 @@ internal class PollsControllerTest {
     fun initMockRepositories() {
         given(userRepository.findById(trustedUserId))
                 .willReturn(Optional.ofNullable(trustedUser))
+        given(userRepository.findById(trustedUserIdWithoutPolls))
+                .willReturn(Optional.ofNullable(trustedUserWithoutPolls))
         given(userRepository.findById(notTrustedUserId))
                 .willReturn(Optional.empty())
         given(pollRepository.findById(validPollId))
@@ -80,7 +85,7 @@ internal class PollsControllerTest {
     @DisplayName("Get list of polls")
     fun gettingPolls() {
         val res = pollsController.listPolls(trustedUserId)
-        assertEquals(validPolls.map { poll -> PollDTO(poll, false) }, res)
+        assertEquals(validPolls.map { poll -> PollDTO(poll, true) }, res)
     }
 
     @Test
@@ -134,11 +139,14 @@ internal class PollsControllerTest {
     @Test
     @DisplayName("Delete an existing poll not by owner")
     fun deleteExistingPollNotByOwner() {
-        assertThrows<ResponseStatusException> { pollsController.deletePoll("123", trustedUserId) }
+        assertThrows<ResponseStatusException> {
+            pollsController.deletePoll(validPollId, trustedUserIdWithoutPolls)
+        }
     }
 
     @Test
     @DisplayName("Delete not an existing poll")
     fun deleteNotExistingPoll() {
+        assertThrows<ResponseStatusException> { pollsController.deletePoll(notValidPollId, trustedUserId) }
     }
 }
