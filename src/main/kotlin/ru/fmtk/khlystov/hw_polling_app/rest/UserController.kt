@@ -17,7 +17,7 @@ class UserController(private val userRepository: UserRepository) {
         val user: User = userRepository.findByName(userName)
                 ?: userRepository.save(User(userName))
         if (user.id == null) {
-            ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving user.")
+            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving user.")
         }
         return UserDTO(user)
     }

@@ -13,6 +13,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.web.server.ResponseStatusException
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
+import ru.fmtk.khlystov.hw_polling_app.rest.dto.UserDTO
 
 @ExtendWith(SpringExtension::class)
 @WebMvcTest(UserController::class)
@@ -29,10 +30,12 @@ internal class UserControllerTest {
     fun savedUserAuth() {
         val trustedUserName = "StoredInDB"
         val testId = "123456789"
+        val trastedUser = User(testId, trustedUserName)
+        val trastedUserDTO = UserDTO(trastedUser)
         given(userRepository.findByName(trustedUserName))
-                .willReturn(User(testId, trustedUserName))
-        val view = userController.userAuth(trustedUserName)
-        Assertions.assertEquals(testId, view)
+                .willReturn(trastedUser)
+        val userDTO = userController.userAuth(trustedUserName)
+        Assertions.assertEquals(trastedUserDTO, userDTO)
     }
 
     @Test
@@ -41,12 +44,13 @@ internal class UserControllerTest {
         val newUserName = "NewInDB"
         val testId = "123456789"
         val newUser = User(testId, newUserName)
+        val newUserDTO = UserDTO(newUser)
         given(userRepository.findByName(newUserName))
                 .willReturn(null)
         given(userRepository.save(User(newUserName)))
                 .willReturn(newUser)
-        val userId = userController.userAuth(newUserName)
-        Assertions.assertEquals(testId, userId)
+        val userDTO = userController.userAuth(newUserName)
+        Assertions.assertEquals(newUserDTO, userDTO)
     }
 
     @Test
