@@ -22,11 +22,12 @@ class UserController(private val userRepository: UserRepository) {
                 .switchIfEmpty(userRepository.save(User(userName)))
                 .map { user ->
                     if (user.id == null) {
-                        Mono.error<ResponseStatusException>(
-                                ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving user."))
+                        throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error saving user.")
+                    }
+                    else {
+                        UserDTO(user)
                     }
                 }
-                .map(::UserDTO)
     }
 
 }
