@@ -19,5 +19,5 @@ interface VoteRepository : ReactiveMongoRepository<Vote, String>, VoteRepository
 
 interface VoteRepositoryCustom {
     fun save(vote: Vote): Mono<Vote>
-    fun getVotes(poll: Poll): Flux<VotesCount>
+    fun getVotes(poll: Poll): Mono<List<VotesCount>>
 }
