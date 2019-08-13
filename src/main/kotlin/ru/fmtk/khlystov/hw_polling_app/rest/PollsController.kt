@@ -11,8 +11,7 @@ import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
 @CrossOrigin
 @RestController
 class PollsController(private val userRepository: UserRepository,
-                      private val pollRepository: PollRepository,
-                      private val voteRepository: VoteRepository) {
+                      private val pollRepository: PollRepository) {
 
     @PostMapping("/polls")
     fun addPoll(@RequestBody(required = true) request: AddOrEditRequestDTO): Mono<PollDTO> {
