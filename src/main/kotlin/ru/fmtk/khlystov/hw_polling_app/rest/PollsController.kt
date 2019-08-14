@@ -44,10 +44,7 @@ class PollsController(private val userRepository: UserRepository,
     @PutMapping("/polls")
     fun editPoll(@RequestBody(required = true) request: AddOrEditRequestDTO): PollDTO {
         val (userId, pollDTO) = request
-        val pollId = pollDTO.id
-        if (pollId == null) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Poll id was not specify.")
-        }
+        val pollId = pollDTO.id ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Poll id was not specify.")
         return withUserAndPoll(userId, pollId) { user, poll ->
             if (poll.owner.id == userId) {
                 val newPoll = pollDTO.toPoll(user)
