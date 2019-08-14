@@ -169,6 +169,13 @@ internal class PollsControllerTest {
     }
 
     @Test
+    @DisplayName("Delete an existing by owner is accepted")
+    fun deleteExistingPollByOwner() {
+        mockMvc.perform(delete("/polls?userId=$trustedUserId&pollId=$validPollId"))
+                .andExpect(MockMvcResultMatchers.status().isAccepted)
+    }
+
+    @Test
     @DisplayName("Delete an existing poll not by owner must throw BAD_REQUEST")
     fun deleteExistingPollNotByOwner() {
         mockMvc.perform(delete("/polls?userId=$trustedUserIdWithoutPolls&pollId=$validPollId"))

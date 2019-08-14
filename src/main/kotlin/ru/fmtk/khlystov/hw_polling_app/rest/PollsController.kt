@@ -1,6 +1,7 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
@@ -59,10 +60,11 @@ class PollsController(private val userRepository: UserRepository,
 
     @DeleteMapping("/polls")
     fun deletePoll(@RequestParam(required = true) pollId: String,
-                   @RequestParam(required = true) userId: String) {
+                   @RequestParam(required = true) userId: String): ResponseEntity<HttpStatus> {
         return withUserAndPoll(userId, pollId) { user, poll ->
             if (user.id == poll.owner.id) {
                 pollRepository.delete(poll)
+                ResponseEntity<HttpStatus>(HttpStatus.ACCEPTED)
             } else {
                 throw ResponseStatusException(HttpStatus.BAD_REQUEST, "You can't delete a poll isn't belonged to you.")
             }
