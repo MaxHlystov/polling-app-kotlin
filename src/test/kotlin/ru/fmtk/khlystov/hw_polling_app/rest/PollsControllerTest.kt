@@ -1,16 +1,21 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.BDDMockito.given
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.test.context.junit.jupiter.SpringExtension
+import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.ui.Model
 import org.springframework.web.server.ResponseStatusException
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
@@ -18,17 +23,16 @@ import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
-import ru.fmtk.khlystov.hw_polling_app.repository.VoteRepository
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.AddOrEditRequestDTO
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
 import java.util.*
 
-@ExtendWith(SpringExtension::class)
-@WebMvcTest(PollsController::class)
+@SpringBootTest
+@AutoConfigureMockMvc
 internal class PollsControllerTest {
 
     @Autowired
-    lateinit var pollsController: PollsController
+    lateinit var mockMvc: MockMvc
 
     @MockBean
     lateinit var userRepository: UserRepository
@@ -37,17 +41,17 @@ internal class PollsControllerTest {
     lateinit var pollRepository: PollRepository
 
     @MockBean
-    lateinit var voteRepository: VoteRepository
-
-    @MockBean
     lateinit var model: Model
 
     companion object {
         val trustedUserName = "StoredInDB"
+        val trustedUserNameWithoutPolls = "User without polls"
         val trustedUserId = "123456789"
+        val trustedUserIdWithoutPolls = "777777777777"
         val notTrustedUserId = "0000000000"
         val notValidPollId = "0000000000"
         val trustedUser = User(trustedUserId, trustedUserName)
+        val trustedUserWithoutPolls = User(trustedUserIdWithoutPolls, trustedUserNameWithoutPolls)
         val validPolls = generateSequence(1000) { i -> i + 1 }
                 .take(4)
                 .map(Int::toString)
@@ -60,12 +64,16 @@ internal class PollsControllerTest {
                 .map(Int::toString)
                 .map { PollItem(it, "Item $it") }
                 .toList()
+
+        val jsonMapper = jacksonObjectMapper()
     }
 
     @BeforeEach
     fun initMockRepositories() {
         given(userRepository.findById(trustedUserId))
                 .willReturn(Optional.ofNullable(trustedUser))
+        given(userRepository.findById(trustedUserIdWithoutPolls))
+                .willReturn(Optional.ofNullable(trustedUserWithoutPolls))
         given(userRepository.findById(notTrustedUserId))
                 .willReturn(Optional.empty())
         given(pollRepository.findById(validPollId))
@@ -79,8 +87,11 @@ internal class PollsControllerTest {
     @Test
     @DisplayName("Get list of polls")
     fun gettingPolls() {
-        val res = pollsController.listPolls(trustedUserId)
-        assertEquals(validPolls.map { poll -> PollDTO(poll, false) }, res)
+        val pollsDTO = validPolls.map { poll -> PollDTO(poll, true) }
+        val jsonMatch = jsonMapper.writeValueAsString(pollsDTO) ?: ""
+        mockMvc.perform(MockMvcRequestBuilders.get("/polls?userId=$trustedUserId"))
+                .andExpect(MockMvcResultMatchers.status().isOk)
+                .andExpect(MockMvcResultMatchers.content().json(jsonMatch))
     }
 
     @Test
@@ -91,8 +102,15 @@ internal class PollsControllerTest {
         given(pollRepository.save(newPoll))
                 .willReturn(newPollSaved)
         val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(newPoll, true))
-        val res = pollsController.addPoll(addingRequest)
-        assertEquals(PollDTO(newPollSaved, true), res)
+        val jsonRequest = jsonMapper.writeValueAsString(addingRequest)
+        val jsonMatch = jsonMapper.writeValueAsString(PollDTO(newPollSaved, true))
+        mockMvc.perform(MockMvcRequestBuilders
+                .post("/polls")
+                .content(jsonRequest)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk)
+                .andExpect(MockMvcResultMatchers.content().json(jsonMatch))
     }
 
     @Test
@@ -105,8 +123,15 @@ internal class PollsControllerTest {
         given(pollRepository.save(poll))
                 .willReturn(pollSaved)
         val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(poll, true))
-        val res = pollsController.editPoll(addingRequest)
-        assertEquals(PollDTO(pollSaved, true), res)
+        val jsonRequest = jsonMapper.writeValueAsString(addingRequest)
+        val jsonMatch = jsonMapper.writeValueAsString(PollDTO(pollSaved, true))
+        mockMvc.perform(MockMvcRequestBuilders
+                .put("/polls")
+                .content(jsonRequest)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk)
+                .andExpect(MockMvcResultMatchers.content().json(jsonMatch))
     }
 
     @Test
@@ -117,7 +142,13 @@ internal class PollsControllerTest {
         given(pollRepository.findById("123"))
                 .willReturn(Optional.ofNullable(poll))
         val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(poll, true))
-        assertThrows<ResponseStatusException> { pollsController.editPoll(addingRequest) }
+        val jsonRequest = jsonMapper.writeValueAsString(addingRequest)
+        mockMvc.perform(MockMvcRequestBuilders
+                .put("/polls")
+                .content(jsonRequest)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest)
     }
 
     @Test
@@ -128,17 +159,33 @@ internal class PollsControllerTest {
         given(pollRepository.save(newPoll))
                 .willReturn(newPollSaved)
         val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(newPoll, true))
-        assertThrows<ResponseStatusException> { pollsController.editPoll(addingRequest) }
+        val jsonRequest = jsonMapper.writeValueAsString(addingRequest)
+        mockMvc.perform(MockMvcRequestBuilders
+                .put("/polls")
+                .content(jsonRequest)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest)
     }
 
     @Test
-    @DisplayName("Delete an existing poll not by owner")
+    @DisplayName("Delete an existing by owner is accepted")
+    fun deleteExistingPollByOwner() {
+        mockMvc.perform(delete("/polls?userId=$trustedUserId&pollId=$validPollId"))
+                .andExpect(MockMvcResultMatchers.status().isAccepted)
+    }
+
+    @Test
+    @DisplayName("Delete an existing poll not by owner must throw BAD_REQUEST")
     fun deleteExistingPollNotByOwner() {
-        assertThrows<ResponseStatusException> { pollsController.deletePoll("123", trustedUserId) }
+        mockMvc.perform(delete("/polls?userId=$trustedUserIdWithoutPolls&pollId=$validPollId"))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest)
     }
 
     @Test
-    @DisplayName("Delete not an existing poll")
+    @DisplayName("Delete not an existing poll must throw BAD_REQUEST")
     fun deleteNotExistingPoll() {
+        mockMvc.perform(delete("/polls?userId=$trustedUserId&pollId=$notValidPollId"))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest)
     }
 }
