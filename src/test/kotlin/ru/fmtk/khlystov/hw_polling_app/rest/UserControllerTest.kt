@@ -1,25 +1,27 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.BDDMockito.given
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.test.context.junit.jupiter.SpringExtension
-import org.springframework.web.server.ResponseStatusException
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.UserDTO
 
-@WebMvcTest(UserController::class)
+
+@SpringBootTest
+@AutoConfigureMockMvc
 internal class UserControllerTest {
 
     @Autowired
-    lateinit var userController: UserController
+    lateinit var mockMvc: MockMvc
 
     @MockBean
     lateinit var userRepository: UserRepository
@@ -33,8 +35,9 @@ internal class UserControllerTest {
         val trastedUserDTO = UserDTO(trastedUser)
         given(userRepository.findByName(trustedUserName))
                 .willReturn(trastedUser)
-        val userDTO = userController.userAuth(trustedUserName)
-        Assertions.assertEquals(trastedUserDTO, userDTO)
+        mockMvc.perform(post("/auth?userName=" + trustedUserName))
+                .andExpect(status().isOk)
+                .andExpect(content().json("{'id': '$testId', 'name': '$trustedUserName'}"))
     }
 
     @Test
@@ -43,13 +46,13 @@ internal class UserControllerTest {
         val newUserName = "NewInDB"
         val testId = "123456789"
         val newUser = User(testId, newUserName)
-        val newUserDTO = UserDTO(newUser)
         given(userRepository.findByName(newUserName))
                 .willReturn(null)
         given(userRepository.save(User(newUserName)))
                 .willReturn(newUser)
-        val userDTO = userController.userAuth(newUserName)
-        Assertions.assertEquals(newUserDTO, userDTO)
+        mockMvc.perform(post("/auth?userName=" + newUserName))
+                .andExpect(status().isOk)
+                .andExpect(content().json("{'id': '$testId', 'name': '$newUserName'}"))
     }
 
     @Test
@@ -59,9 +62,8 @@ internal class UserControllerTest {
         val newUser = User(null, newUserName)
         given(userRepository.save(newUser))
                 .willReturn(newUser)
-        assertThrows<ResponseStatusException> {
-            userController.userAuth(newUserName)
-        }
+        mockMvc.perform(post("/auth?userName=" + newUserName))
+                .andExpect(status().isInternalServerError)
     }
 
 
