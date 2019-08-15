@@ -1,4 +1,5 @@
 # Web-poll application
+Frontend see [here](https://github.com/MaxHlystov/polling-app-react-frontend)
 
 ## User Story:
 
@@ -23,5 +24,4 @@ Split application on two parts: backend and frontend.
 
 
 ### Home work #3
-Использовать WebFlux
-Вместо классического потока и embedded Web-сервера использовать WebFlux. 
+Use WebFlux. 
