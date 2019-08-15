@@ -12,16 +12,19 @@ Frontend see [here](https://github.com/MaxHlystov/polling-app-react-frontend)
 -    As an unauthenticated or authenticated user, I can see the results of polls in chart form. (This could be implemented using Chart.js or Google Charts.)
 -    As an authenticated user, if I don't like the options on a poll, I can create a new option.
 
-### Home work №1
+### Homework №1
 These items need to be done in hw1:
 - Create and choose user without authentication.
 - Creating and changing of polls.
 - Voting in any poll.
 
 
-### Home work #2
+### Homework #2
 Split application on two parts: backend and frontend.
 
-
-### Home work #3
+### Homework #3
 Use WebFlux. 
+
+### Homework #4
+Add form-based authentication.
+Made UserServices by yourself.
