@@ -63,13 +63,12 @@ class PollsController(private val userRepository: UserRepository,
     fun deletePoll(@RequestParam(required = true) pollId: String,
                    @RequestParam(required = true) userId: String): Mono<Void> {
         return withUserAndPoll(userRepository, pollRepository, userId, pollId)
-                .flatMap { (user, poll) ->
-                    if (user.id == poll.owner.id) {
-                        pollRepository.delete(poll)
-                    } else {
+                .filter { (user, poll) -> user.id == poll.owner.id }
+                .switchIfEmpty(
                         getMonoHttpError(HttpStatus.BAD_REQUEST,
-                                "You can't delete a poll isn't belonged to you.")
-                    }
-                };
+                                "You can't delete a poll isn't belonged to you."))
+                .flatMap { (_, poll) ->
+                    pollRepository.delete(poll)
+                }
     }
 }

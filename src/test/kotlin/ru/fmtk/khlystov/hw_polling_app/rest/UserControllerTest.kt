@@ -2,26 +2,24 @@ package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.BDDMockito.given
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
-import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.context.junit.jupiter.SpringExtension
+import org.springframework.test.web.reactive.server.WebTestClient
+import reactor.core.publisher.Mono
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
-import ru.fmtk.khlystov.hw_polling_app.rest.dto.UserDTO
 
-
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebFluxTest(UserController::class)
+@ExtendWith(SpringExtension::class)
 internal class UserControllerTest {
 
     @Autowired
-    lateinit var mockMvc: MockMvc
+    lateinit var client: WebTestClient
 
     @MockBean
     lateinit var userRepository: UserRepository
@@ -31,13 +29,17 @@ internal class UserControllerTest {
     fun savedUserAuth() {
         val trustedUserName = "StoredInDB"
         val testId = "123456789"
-        val trastedUser = User(testId, trustedUserName)
-        val trastedUserDTO = UserDTO(trastedUser)
+        val trustedUser = User(testId, trustedUserName)
         given(userRepository.findByName(trustedUserName))
-                .willReturn(trastedUser)
-        mockMvc.perform(post("/auth?userName=" + trustedUserName))
-                .andExpect(status().isOk)
-                .andExpect(content().json("{'id': '$testId', 'name': '$trustedUserName'}"))
+                .willReturn(Mono.just(trustedUser))
+        given<Mono<User>>(userRepository.save(Mockito.any()))
+                .willReturn(Mono.empty())
+        client.post()
+                .uri("/auth?userName=$trustedUserName")
+                .exchange()
+                .expectStatus().isOk
+                .expectBody()
+                .json("{'id': '$testId', 'name': '$trustedUserName'}")
     }
 
     @Test
@@ -47,12 +49,15 @@ internal class UserControllerTest {
         val testId = "123456789"
         val newUser = User(testId, newUserName)
         given(userRepository.findByName(newUserName))
-                .willReturn(null)
-        given(userRepository.save(User(newUserName)))
-                .willReturn(newUser)
-        mockMvc.perform(post("/auth?userName=" + newUserName))
-                .andExpect(status().isOk)
-                .andExpect(content().json("{'id': '$testId', 'name': '$newUserName'}"))
+                .willReturn(Mono.empty())
+        given<Mono<User>>(userRepository.save(Mockito.any()))
+                .willReturn(Mono.just(newUser))
+        client.post()
+                .uri("/auth?userName=$newUserName")
+                .exchange()
+                .expectStatus().isOk
+                .expectBody()
+                .json("{'id': '$testId', 'name': '$newUserName'}")
     }
 
     @Test
@@ -60,10 +65,14 @@ internal class UserControllerTest {
     fun exceptionIfErrorSave() {
         val newUserName = "Name of user not in DB"
         val newUser = User(null, newUserName)
-        given(userRepository.save(newUser))
-                .willReturn(newUser)
-        mockMvc.perform(post("/auth?userName=" + newUserName))
-                .andExpect(status().isInternalServerError)
+        given(userRepository.findByName(Mockito.anyString()))
+                .willReturn(Mono.empty())
+        given<Mono<User>>(userRepository.save(Mockito.any()))
+                .willReturn(Mono.just(newUser))
+        client.post()
+                .uri("/auth?userName=$newUserName")
+                .exchange()
+                .expectStatus().is5xxServerError
     }
 
 

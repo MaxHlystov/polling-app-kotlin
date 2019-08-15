@@ -29,13 +29,13 @@ dependencyManagement {
 
 dependencies {
     compile("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
-    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    compile("org.springframework.boot:spring-boot-starter-webflux") {
+        exclude("hibernate-validator")
+    }
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.apache.commons:commons-lang3:3.4")
-    compile("org.springframework:spring-webflux:5.1.6.RELEASE")
     implementation("commons-codec:commons-codec:1.13")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
@@ -44,6 +44,7 @@ dependencies {
     testRuntime("org.junit.jupiter:junit-jupiter-engine:5.5.1")
     testImplementation("org.junit.platform:junit-platform-commons:1.4.2")
     testRuntime("org.junit.platform:junit-platform-engine:1.4.2")
+    testCompile("io.projectreactor:reactor-test")
 }
 
 tasks.withType<KotlinCompile> {
