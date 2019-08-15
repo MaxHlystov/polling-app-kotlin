@@ -25,8 +25,6 @@ import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
 
 @WebFluxTest(PollsController::class)
 @ExtendWith(SpringExtension::class)
-//@SpringBootTest
-//@AutoConfigureMockMvc
 internal class PollsControllerTest {
 
     @Autowired
