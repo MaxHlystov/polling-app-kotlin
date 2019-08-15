@@ -1,4 +1,6 @@
 package ru.fmtk.khlystov.hw_polling_app.domain
 
-class PollItem {
-}
+import org.springframework.data.annotation.Id
+
+data class PollItem(@Id var id: String?,
+                    val title: String)

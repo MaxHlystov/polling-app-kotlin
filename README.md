@@ -1,6 +1,6 @@
-#Web-poll application
+# Web-poll application
 
-##User Story:
+## User Story:
 
 -    As an authenticated user, I can keep my polls and come back later to access them.
 -    As an authenticated user, I can share my polls with my friends.
@@ -11,8 +11,12 @@
 -    As an unauthenticated or authenticated user, I can see the results of polls in chart form. (This could be implemented using Chart.js or Google Charts.)
 -    As an authenticated user, if I don't like the options on a poll, I can create a new option.
 
-###Home work №1
+### Home work №1
 These items need to be done in hw1:
 - Create and choose user without authentication.
 - Creating and changing of polls.
 - Voting in any poll.
+
+
+### Home work #2
+Split application on two parts: backend and frontend.
