@@ -28,6 +28,7 @@ dependencyManagement {
 }
 
 dependencies {
+    compile("org.springframework.boot:spring-boot-starter-security")
     compile("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
     compile("org.springframework.boot:spring-boot-starter-webflux") {
         exclude("hibernate-validator")
@@ -40,6 +41,7 @@ dependencies {
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     testCompile("org.springframework.boot:spring-boot-starter-test")
+    testCompile("org.springframework.security:spring-security-test")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.5.1")
     testRuntime("org.junit.jupiter:junit-jupiter-engine:5.5.1")
     testImplementation("org.junit.platform:junit-platform-commons:1.4.2")
