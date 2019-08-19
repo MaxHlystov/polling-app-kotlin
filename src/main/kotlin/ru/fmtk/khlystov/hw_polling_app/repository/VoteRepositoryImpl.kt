@@ -6,11 +6,15 @@ import org.springframework.data.mongodb.core.aggregation.Aggregation.*
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.transaction.annotation.Transactional
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toMono
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
 import ru.fmtk.khlystov.hw_polling_app.domain.Vote
 import ru.fmtk.khlystov.hw_polling_app.domain.VotesCount
+import reactor.core.publisher.Operators.`as`
+import reactor.core.publisher.Operators.`as`
+
 
 open class VoteRepositoryImpl(private val mongoTemplate: ReactiveMongoTemplate) : VoteRepositoryCustom {
 
@@ -28,21 +32,22 @@ open class VoteRepositoryImpl(private val mongoTemplate: ReactiveMongoTemplate) 
 
     }
 
-    override fun getVotes(poll: Poll): Mono<List<VotesCount>> {
+    override fun getVotes(poll: Poll): Flux<VotesCount> {
         //db.vote.aggregate({ $match: {"poll.$id" : ObjectId("5d3b7851d606dd318817430b") }},
         //                  { $group: {_id: "$pollItem", total: { $sum: 1}}})
+        /////////////////////////////////////////////////////////////////////////////////////
+        // db.poll.aggregate([{ $match: {"_id" : ObjectId("5d515912891a7728c45c119e") }},
+        //    {$project: {"items": 1, "_id": 0}},
+        //    {$unwind: "$items"},
+        //    {$lookup: {from: "vote", localField: "items._id", foreignField: "pollItem._id", as: "item"}},
+        //    {$project: {_id: "$items", total: { $size: "$item"}}}])
         val agg = newAggregation(
                 match(Criteria.where("poll.\$id").`is`(ObjectId(poll.id))),
-                group("pollItem").count().`as`("total"),
-                project("total").and("pollItem").previousOperation())
+                project("items"),
+                unwind("items"),
+                lookup("vote", "items._id", "pollItem._id", "item"),
+                project().andExpression("items").`as`("_id")
+                        .and("item").size().`as`("total"))
         return mongoTemplate.aggregate(agg, Vote::class.java, VotesCount::class.java)
-                .collectList()
-                .map { votesFound ->
-                    // We expect, there will be not greater than 100 poll items, so O(n^2) is not too bad.
-                    poll.items.map { pollItem ->
-                        val vote = votesFound.firstOrNull { votesCount -> votesCount.pollItem.id == pollItem.id }
-                        VotesCount(pollItem, vote?.total ?: 0)
-                    }
-                }
     }
 }

@@ -2,7 +2,9 @@ package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.core.publisher.toFlux
 import reactor.core.publisher.toMono
 import ru.fmtk.khlystov.hw_polling_app.domain.Vote
 import ru.fmtk.khlystov.hw_polling_app.repository.*
@@ -17,7 +19,7 @@ class VoteController(private val userRepository: UserRepository,
 
     @GetMapping("/votes")
     fun statistics(@RequestParam(required = true) pollId: String,
-                   @RequestParam(required = true) userId: String): Mono<List<VotesCountDTO>> {
+                   @RequestParam(required = true) userId: String): Flux<VotesCountDTO> {
         return withUserAndPoll(userRepository, pollRepository, userId, pollId)
                 .flatMap { (user, poll) ->
                     voteRepository.findAllByPollAndUser(poll, user)
@@ -26,14 +28,11 @@ class VoteController(private val userRepository: UserRepository,
                             .map { vote -> vote.pollItem.id to poll }
                             .switchIfEmpty(Mono.just("" to poll))
                 }
+                .toFlux()
                 .flatMap { (selectedItemId, poll) ->
                     voteRepository.getVotes(poll)
-                            .map { votesCountList ->
-                                votesCountList.asSequence()
-                                        .map { votesCount ->
-                                            VotesCountDTO(votesCount, votesCount.pollItem.id == selectedItemId)
-                                        }
-                                        .toList()
+                            .map { votesCount ->
+                                VotesCountDTO(votesCount, votesCount.pollItem.id == selectedItemId)
                             }
                 }
                 .switchIfEmpty(getMonoHttpError(HttpStatus.INTERNAL_SERVER_ERROR,
