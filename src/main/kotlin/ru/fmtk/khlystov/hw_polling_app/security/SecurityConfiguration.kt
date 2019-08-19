@@ -8,6 +8,12 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers.anyExchange
+import org.springframework.security.config.web.server.ServerHttpSecurity
+import org.springframework.security.web.server.SecurityWebFilterChain
+import org.springframework.security.web.server.authentication.WebFilterChainServerAuthenticationSuccessHandler
+import reactor.core.publisher.Mono
+
 
 @EnableWebFluxSecurity
 class SecurityConfiguration : WebSecurityConfigurerAdapter() {
@@ -16,30 +22,17 @@ class SecurityConfiguration : WebSecurityConfigurerAdapter() {
                 .withUser("admin").password("password").roles("ADMIN")
     }
 
-    override fun configure(web: WebSecurity) {
-        web.ignoring().antMatchers("/")
-    }
-
-    override fun configure(http: HttpSecurity) {
-        http.csrf().disable()
-                .authorizeRequests().antMatchers("/public").permitAll()
-                .and()
-                .authorizeRequests().antMatchers("/authenticated", "/success").authenticated()
-                .and()
-                // Включает Form-based аутентификацию
-                .formLogin()
-    }
-
     @Bean
-    open fun passwordEncoderAndMatcher(): PasswordEncoder {
-        return object : PasswordEncoder {
-            override fun encode(rawPassword: CharSequence?): String {
-                return BCryptPasswordEncoder().encode(rawPassword)
-            }
-
-            override fun matches(rawPassword: CharSequence?, encodedPassword: String?): Boolean {
-                return BCryptPasswordEncoder().matches(rawPassword, encodedPassword)
-            }
-        }
+    fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
+        http.csrf().disable()
+                .authorizeExchange().pathMatchers("/auth").permitAll()
+                .and()
+                .authorizeExchange().pathMatchers("/polls", "/votes").authenticated()
+                .and()
+                .formLogin()
+                .loginPage("/auth")
+                .authenticationFailureHandler { exchange, exception -> Mono.error(exception) }
+                .authenticationSuccessHandler(WebFilterChainServerAuthenticationSuccessHandler())
+        return http.build()
     }
 }
