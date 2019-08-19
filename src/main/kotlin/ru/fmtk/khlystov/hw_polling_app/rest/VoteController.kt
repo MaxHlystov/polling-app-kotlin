@@ -21,14 +21,13 @@ class VoteController(private val userRepository: UserRepository,
     fun statistics(@RequestParam(required = true) pollId: String,
                    @RequestParam(required = true) userId: String): Flux<VotesCountDTO> {
         return withUserAndPoll(userRepository, pollRepository, userId, pollId)
+                .toFlux()
                 .flatMap { (user, poll) ->
                     voteRepository.findAllByPollAndUser(poll, user)
                             .take(1)
-                            .toMono()
                             .map { vote -> vote.pollItem.id to poll }
-                            .switchIfEmpty(Mono.just("" to poll))
+                            .switchIfEmpty(Flux.just("" to poll))
                 }
-                .toFlux()
                 .flatMap { (selectedItemId, poll) ->
                     voteRepository.getVotes(poll)
                             .map { votesCount ->
