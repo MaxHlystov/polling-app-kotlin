@@ -16,9 +16,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.reactive.server.WebTestClient
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import ru.fmtk.khlystov.hw_polling_app.domain.Poll
-import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
-import ru.fmtk.khlystov.hw_polling_app.domain.User
+import ru.fmtk.khlystov.hw_polling_app.domain.*
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.VoteRepository
@@ -40,14 +38,15 @@ internal class VoteControllerTest {
     lateinit var voteRepository: VoteRepository
 
     companion object {
-        const val trustedUserName = "StoredInDB"
-        const val trustedUserNameWithoutPolls = "User without polls"
-        const val trustedUserId = "123456789"
-        const val trustedUserIdWithoutPolls = "777777777777"
-        const val notTrustedUserId = "0000000000"
+        const val trustedUserIdWithoutVotes = "777777777777"
         const val notValidPollId = "0000000000"
-        val trustedUser = User(trustedUserId, trustedUserName)
-        val trustedUserWithoutPolls = User(trustedUserIdWithoutPolls, trustedUserNameWithoutPolls)
+        val users = generateSequence(1) { i -> i + 1 }
+                        .take(4)
+                        .map(Int::toString)
+                        .map { userId -> User(userId, "StoredInDB-$userId") }
+                        .toList()
+        val trustedUser = users[0]
+        val trustedUserWithoutPolls = User(trustedUserIdWithoutVotes, "User without votes")
         val validPolls = generateSequence(1000) { i -> i + 1 }
                 .take(4)
                 .map(Int::toString)
@@ -55,13 +54,20 @@ internal class VoteControllerTest {
                 .toList()
         val validPoll = validPolls[0]
         val validPollId = validPoll.id ?: "1234"
+        val jsonMapper = jacksonObjectMapper()
+
         private fun genPollItems(number: Int): List<PollItem> = generateSequence(1) { i -> i + 1 }
                 .take(number)
                 .map(Int::toString)
                 .map { PollItem(it, "Item $it") }
                 .toList()
 
-        val jsonMapper = jacksonObjectMapper()
+        private fun genVotes(number: Int): List<Vote> = generateSequence(1) { i -> i + 1 }
+                .take(number)
+                .map(Int::toString)
+                .map { PollItem(it, "Item $it") }
+                .toList()
+
     }
 
     @BeforeEach

@@ -11,9 +11,6 @@ import ru.fmtk.khlystov.hw_polling_app.domain.VotesCount
 
 @Repository
 interface VoteRepository : ReactiveMongoRepository<Vote, String>, VoteRepositoryCustom {
-    fun findAllByPoll(poll: Poll): Flux<Vote>
-    fun findAllByUser(user: User): Flux<Vote>
-    fun countAllByPoll(poll: Poll): Mono<Long>
     fun findAllByPollAndUser(poll: Poll, user: User): Flux<Vote>
 }
 
