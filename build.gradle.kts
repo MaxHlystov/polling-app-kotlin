@@ -33,6 +33,11 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-webflux") {
         exclude("hibernate-validator")
     }
+
+    compile("org.springframework.security:spring-security-core:5.1.6.RELEASE")
+    compile("org.springframework.boot:spring-boot-starter-security")
+    compile("org.springframework.security:spring-security-config:5.1.6.RELEASE")
+
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
