@@ -1,6 +1,8 @@
 package ru.fmtk.khlystov.hw_polling_app.security
 
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.builders.WebSecurity
@@ -13,14 +15,18 @@ import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.WebFilterChainServerAuthenticationSuccessHandler
 import reactor.core.publisher.Mono
+import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager
+import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
+import org.springframework.security.authentication.ReactiveAuthenticationManager
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 
-
+@Configuration
 @EnableWebFluxSecurity
 class SecurityConfiguration : WebSecurityConfigurerAdapter() {
-    override fun configure(auth: AuthenticationManagerBuilder) {
-        auth.inMemoryAuthentication()
-                .withUser("admin").password("password").roles("ADMIN")
-    }
+//    override fun configure(auth: AuthenticationManagerBuilder) {
+//        auth.inMemoryAuthentication()
+//                .withUser("admin").password("password").roles("ADMIN")
+//    }
 
     @Bean
     fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
@@ -34,5 +40,10 @@ class SecurityConfiguration : WebSecurityConfigurerAdapter() {
                 .authenticationFailureHandler { exchange, exception -> Mono.error(exception) }
                 .authenticationSuccessHandler(WebFilterChainServerAuthenticationSuccessHandler())
         return http.build()
+    }
+
+    @Bean
+    fun authenticationManager(@Autowired userRepository: ReactiveUserDetailsService): ReactiveAuthenticationManager {
+        return UserDetailsRepositoryReactiveAuthenticationManager(userRepository)
     }
 }
