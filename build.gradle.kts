@@ -28,7 +28,6 @@ dependencyManagement {
 }
 
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter-security")
     compile("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
     compile("org.springframework.boot:spring-boot-starter-webflux") {
         exclude("hibernate-validator")

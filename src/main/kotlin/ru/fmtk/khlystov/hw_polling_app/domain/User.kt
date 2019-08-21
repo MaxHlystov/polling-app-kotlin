@@ -4,7 +4,7 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document
-open class User(@Id var id: String?,
+data class User(@Id var id: String?,
                 val name: String,
                 val email: String = "",
                 val password: String = "") {
@@ -19,5 +19,9 @@ open class User(@Id var id: String?,
         accountNonLocked = user.accountNonLocked
         credentialsNonExpired = user.credentialsNonExpired
         enabled = user.enabled
+    }
+
+    override fun toString(): String {
+        return "User(id=$id, name='$name', password='$password')"
     }
 }
