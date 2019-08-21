@@ -1,16 +1,16 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.nhaarman.mockitokotlin2.any
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.BDDMockito
 import org.mockito.BDDMockito.given
-import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.reactive.server.WebTestClient
 import reactor.core.publisher.Flux
@@ -19,6 +19,7 @@ import ru.fmtk.khlystov.hw_polling_app.domain.*
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.VoteRepository
+import ru.fmtk.khlystov.hw_polling_app.repository.VoteRepositoryCustom
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.VoteDTO
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.VotesCountDTO
 
@@ -35,8 +36,11 @@ internal class VoteControllerTest {
     @MockBean
     lateinit var pollRepository: PollRepository
 
-    @MockBean
+    @MockBean(extraInterfaces = [VoteRepositoryCustom::class])
     lateinit var voteRepository: VoteRepository
+
+    @MockBean
+    lateinit var mongoTemplate: ReactiveMongoTemplate
 
     companion object {
         const val trustedUserIdWithoutVotes = "777777777777"
@@ -85,26 +89,26 @@ internal class VoteControllerTest {
     @BeforeEach
     fun initMockRepositories() {
         users.forEach { user ->
-            BDDMockito.given(userRepository.findById(user.id ?: ""))
+            given(userRepository.findById(user.id ?: ""))
                     .willReturn(Mono.just(user))
         }
         validPolls.forEach { poll ->
-            BDDMockito.given(pollRepository.findById(poll.id ?: ""))
+            given(pollRepository.findById(poll.id ?: ""))
                     .willReturn(Mono.just(poll))
-            BDDMockito.given(voteRepository.getVotes(poll))
+            given(voteRepository.getVotes(poll))
                     .willReturn(Flux.fromIterable(getVotesCount(votes, poll)))
         }
         votes.forEach { vote ->
-            BDDMockito.given(voteRepository.findAllByPollAndUser(vote.poll, vote.user))
+            given(voteRepository.findAllByPollAndUser(vote.poll, vote.user))
                     .willReturn(Flux.just(vote))
         }
-        BDDMockito.given(userRepository.findById(notTrustedUserId))
+        given(userRepository.findById(notTrustedUserId))
                 .willReturn(Mono.empty())
-        BDDMockito.given(userRepository.findById(trustedUserIdWithoutVotes))
+        given(userRepository.findById(trustedUserIdWithoutVotes))
                 .willReturn(Mono.just(trustedUserWithoutVotes))
-        BDDMockito.given(pollRepository.findById(notValidPollId))
+        given(pollRepository.findById(notValidPollId))
                 .willReturn(Mono.empty())
-        BDDMockito.given(pollRepository.findAll())
+        given(pollRepository.findAll())
                 .willReturn(Flux.fromIterable(validPolls))
     }
 
@@ -149,7 +153,7 @@ internal class VoteControllerTest {
     @DisplayName("Saving existing vote should return vote DTO with id")
     fun saveExistingVote() {
         val vote = votes[0]
-        given(voteRepository.save(Mockito.any()))
+        given(voteRepository.save(any()))
                 .willReturn(Mono.just(vote))
         val jsonMatch = jsonMapper.writeValueAsString(VoteDTO(vote))
         client.post()
@@ -163,7 +167,8 @@ internal class VoteControllerTest {
     @Test
     @DisplayName("Saving not existing vote should return error")
     fun saveNotExistingVote() {
-        given(voteRepository.save(Mockito.any()))
+        //doReturn(Mono.empty<Vote>()).whenever(voteRepository).save(any())
+        given(voteRepository.save(any()))
                 .willReturn(Mono.empty())
         val optionId = "123"
         client.post()

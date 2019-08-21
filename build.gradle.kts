@@ -39,6 +39,7 @@ dependencies {
     implementation("commons-codec:commons-codec:1.13")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
+    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0")
     testCompile("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.5.1")
     testRuntime("org.junit.jupiter:junit-jupiter-engine:5.5.1")
