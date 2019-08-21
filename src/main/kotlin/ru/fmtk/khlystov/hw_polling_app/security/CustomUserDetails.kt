@@ -6,7 +6,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 
-open class CustomUserDetails(val name: String,
+open class CustomUserDetails(val user: User,
+                             val name: String,
                              val email: String = "",
                              val passwordIn: String = "") : UserDetails {
 
@@ -17,7 +18,7 @@ open class CustomUserDetails(val name: String,
 
     private val log = LoggerFactory.getLogger(CustomUserDetails::class.java)
 
-    constructor(user: User) : this(user.name, user.email, user.password) {
+    constructor(user: User) : this(user, user.name, user.email, user.password) {
         accountNonExpired = user.accountNonExpired
         accountNonLocked = user.accountNonLocked
         credentialsNonExpired = user.credentialsNonExpired

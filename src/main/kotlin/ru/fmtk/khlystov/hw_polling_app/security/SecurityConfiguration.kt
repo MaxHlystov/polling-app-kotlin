@@ -1,5 +1,6 @@
 package ru.fmtk.khlystov.hw_polling_app.security
 
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
@@ -18,14 +19,18 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.WebFilterChainServerAuthenticationSuccessHandler
 import reactor.core.publisher.Mono
+import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager
+import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
+import org.springframework.security.authentication.ReactiveAuthenticationManager
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 
 @Configuration
 @EnableWebFluxSecurity
 class SecurityConfiguration : WebSecurityConfigurerAdapter() {
-    override fun configure(auth: AuthenticationManagerBuilder) {
-        auth.inMemoryAuthentication()
-                .withUser("admin").password("password").roles("ADMIN")
-    }
+//    override fun configure(auth: AuthenticationManagerBuilder) {
+//        auth.inMemoryAuthentication()
+//                .withUser("admin").password("password").roles("ADMIN")
+//    }
 
     override fun configure(web: WebSecurity) {
         web.ignoring().antMatchers("/")
@@ -83,4 +88,9 @@ class SecurityConfiguration : WebSecurityConfigurerAdapter() {
                 .build()
         return MapReactiveUserDetailsService(user)
     }*/
+
+    @Bean
+    fun authenticationManager(@Autowired userRepository: ReactiveUserDetailsService): ReactiveAuthenticationManager {
+        return UserDetailsRepositoryReactiveAuthenticationManager(userRepository)
+    }
 }
