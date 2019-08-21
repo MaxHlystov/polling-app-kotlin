@@ -36,11 +36,8 @@ internal class VoteControllerTest {
     @MockBean
     lateinit var pollRepository: PollRepository
 
-    @MockBean(extraInterfaces = [VoteRepositoryCustom::class])
-    lateinit var voteRepository: VoteRepository
-
     @MockBean
-    lateinit var mongoTemplate: ReactiveMongoTemplate
+    lateinit var voteRepository: VoteRepository
 
     companion object {
         const val trustedUserIdWithoutVotes = "777777777777"
