@@ -1,10 +1,9 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.junit.jupiter.api.Test
-
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.BDDMockito
 import org.mockito.BDDMockito.given
@@ -12,7 +11,6 @@ import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.http.MediaType
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.reactive.server.WebTestClient
 import reactor.core.publisher.Flux
@@ -21,9 +19,8 @@ import ru.fmtk.khlystov.hw_polling_app.domain.*
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.VoteRepository
-import ru.fmtk.khlystov.hw_polling_app.rest.dto.AddOrEditRequestDTO
-import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.VoteDTO
+import ru.fmtk.khlystov.hw_polling_app.rest.dto.VotesCountDTO
 
 @WebFluxTest(VoteController::class)
 @ExtendWith(SpringExtension::class)
@@ -75,7 +72,14 @@ internal class VoteControllerTest {
         }
 
         private fun genVote(poll: Poll, user: User, optionIdx: Int): Vote =
-                Vote(null, user, poll, poll.items[optionIdx % poll.items.size])
+                Vote(user.id + poll.id + optionIdx.toString(), user, poll, poll.items[optionIdx % poll.items.size])
+
+        private fun getVotesCount(votes: List<Vote>, poll: Poll): List<VotesCount> =
+                votes.filter { vote -> vote.poll == poll }
+                        .map(Vote::pollItem)
+                        .groupingBy { pollItem -> pollItem }
+                        .eachCount()
+                        .entries.map { (pollItem, total) -> VotesCount(pollItem, total.toLong()) }
     }
 
     @BeforeEach
@@ -87,6 +91,8 @@ internal class VoteControllerTest {
         validPolls.forEach { poll ->
             BDDMockito.given(pollRepository.findById(poll.id ?: ""))
                     .willReturn(Mono.just(poll))
+            BDDMockito.given(voteRepository.getVotes(poll))
+                    .willReturn(Flux.fromIterable(getVotesCount(votes, poll)))
         }
         votes.forEach { vote ->
             BDDMockito.given(voteRepository.findAllByPollAndUser(vote.poll, vote.user))
@@ -103,15 +109,47 @@ internal class VoteControllerTest {
     }
 
     @Test
-    @DisplayName("Get list of polls")
-    fun statistics() {
+    @DisplayName("Get list of polls for existing poll and trusted user")
+    fun statisticsForExistingPollAndTrustedUser() {
+        val poll = validPolls[0]
+        val userItem = votes.filter { vote -> vote.poll == poll && vote.user == trustedUser }
+                .map(Vote::pollItem).first()
+        val votesCountDTO = getVotesCount(votes, poll)
+                .map { votesCount -> VotesCountDTO(votesCount, votesCount.pollItem == userItem) }
+                .toList()
+        val jsonMatch = jsonMapper.writeValueAsString(votesCountDTO) ?: ""
+        client.get()
+                .uri("/votes?userId=${trustedUser.id}&pollId=${poll.id}")
+                .exchange()
+                .expectStatus().isOk
+                .expectBody()
+                .json(jsonMatch)
+    }
+
+    @Test
+    @DisplayName("Get error for existing poll and not trusted user")
+    fun statisticsForExistingPollAndNotTrustedUser() {
+        val poll = validPolls[0]
+        client.get()
+                .uri("/votes?userId=${notTrustedUserId}&pollId=${poll.id}")
+                .exchange()
+                .expectStatus().isBadRequest
+    }
+
+    @Test
+    @DisplayName("Get error for not existing poll and trusted user")
+    fun statisticsForNotExistingPollAndTrustedUser() {
+        client.get()
+                .uri("/votes?userId=${trustedUser.id}&pollId=${notValidPollId}")
+                .exchange()
+                .expectStatus().isBadRequest
     }
 
     @Test
     @DisplayName("Saving existing vote should return vote DTO with id")
     fun saveExistingVote() {
         val vote = votes[0]
-        given(voteRepository.save(Mockito.any(Vote::class.java)))
+        given(voteRepository.save(Mockito.any()))
                 .willReturn(Mono.just(vote))
         val jsonMatch = jsonMapper.writeValueAsString(VoteDTO(vote))
         client.post()
