@@ -3,45 +3,41 @@ package ru.fmtk.khlystov.hw_polling_app.security
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.security.authentication.ReactiveAuthenticationManager
-import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
-import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.builders.WebSecurity
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.ServerHttpSecurity
-import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.web.server.SecurityWebFilterChain
-
+import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 
 @Configuration
+@EnableReactiveMethodSecurity
 @EnableWebFluxSecurity
-class SecurityConfiguration { //}: WebSecurityConfigurerAdapter() {
-//    override fun configure(auth: AuthenticationManagerBuilder) {
-//        auth.inMemoryAuthentication()
-//                .withUser("admin").password("password").roles("ADMIN")
-//    }
+class SecurityConfiguration() {
+    @Bean
+    fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
+        http.csrf().disable()
+                .authorizeExchange().pathMatchers("/auth", "/login").permitAll()
+                .and()
+                .authorizeExchange().pathMatchers("/polls/**", "/votes/**").authenticated()
+                .and()
+                .formLogin()
+                .loginPage("/login")
+        return http.build()
+    }
 
-//    override fun configure(web: WebSecurity) {
-//        web.ignoring().antMatchers("/")
-//    }
+    @Bean
+    fun passwordEncoder(): PasswordEncoder {
+        return BCryptPasswordEncoder()
+    }
+}
 
-    //public override fun configure(http: HttpSecurity) {
-//        http.csrf().disable()
-//                //.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-//                //.and()
-//                .authorizeRequests().antMatchers("/auth/**", "/login/**").permitAll()
-//                .and()
-//                .authorizeRequests().antMatchers("/polls/**", "/votes/**").authenticated()
-//                .and()
-//                .authorizeRequests().antMatchers("/user/**").hasRole("USER")
-//                .and()
-//                .formLogin()
-//    }
-
+/*
+@Configuration
+@EnableReactiveMethodSecurity
+@EnableWebFluxSecurity
+class SecurityConfiguration {
     @Bean
     fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         http.csrf().disable()
@@ -57,15 +53,6 @@ class SecurityConfiguration { //}: WebSecurityConfigurerAdapter() {
     }
 
     @Bean
-    fun passwordEncoder(): PasswordEncoder {
-        //return NoOpPasswordEncoder.getInstance()
-        return BCryptPasswordEncoder()
-    }
-
-    @Autowired
-    lateinit var userDetailsService: ReactiveUserDetailsService
-
-    @Bean
     fun userDetailsService(): ReactiveUserDetailsService {
 //        val user = User
 //                .withUsername("user")
@@ -76,13 +63,21 @@ class SecurityConfiguration { //}: WebSecurityConfigurerAdapter() {
         return userDetailsService
     }
 
-    /*@Bean
-    fun userDetailsService(): ReactiveUserDetailsService {
-
-    }*/
+    @Bean
+    open fun passwordEncoderAndMatcher(): PasswordEncoder {
+        return object : PasswordEncoder {
+            override fun encode(rawPassword: CharSequence?): String {
+                return BCryptPasswordEncoder().encode(rawPassword)
+            }
+            override fun matches(rawPassword: CharSequence?, encodedPassword: String?): Boolean {
+                return BCryptPasswordEncoder().matches(rawPassword, encodedPassword)
+            }
+        }
+    }
 
 //    @Bean
 //    fun authenticationManager(@Autowired userRepository: ReactiveUserDetailsService): ReactiveAuthenticationManager {
 //        return UserDetailsRepositoryReactiveAuthenticationManager(userRepository)
 //    }
 }
+*/
