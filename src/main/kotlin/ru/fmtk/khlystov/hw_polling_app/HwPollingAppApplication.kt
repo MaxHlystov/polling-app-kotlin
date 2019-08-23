@@ -32,11 +32,11 @@ class HwPollingAppApplication {
                     .filter { user -> user.password.isEmpty() }
                     .map { user -> User(user.id, user.name, user.email, "111111") }
                     .switchIfEmpty(
-                            Flux.just(User(null, "Max", "test@ru", passwordEncoder.encode("111111"))))
-                    .doOnNext { user -> userRepository.save(user) }
+                            Flux.just(User(null, "User", "user@localhost", passwordEncoder.encode("111111"))))
+                    .flatMap { user -> userRepository.save(user) }
+                    .filter { user -> user.id != null }
+                    .flatMap { user -> userRepository.findById(user.id ?: "") }
                     .subscribe()
-
-            userRepository.findAll().log().subscribe() // { user -> log.info("user: ${user}") }
         }
     }
 }

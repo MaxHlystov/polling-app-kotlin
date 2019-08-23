@@ -63,7 +63,7 @@ class SecurityConfiguration { //}: WebSecurityConfigurerAdapter() {
     }
 
     @Autowired
-    lateinit var userRepository: ReactiveUserDetailsService
+    lateinit var userDetailsService: ReactiveUserDetailsService
 
     @Bean
     fun userDetailsService(): ReactiveUserDetailsService {
@@ -73,7 +73,7 @@ class SecurityConfiguration { //}: WebSecurityConfigurerAdapter() {
 //                .roles("USER")
 //                .build()
 //        return MapReactiveUserDetailsService(user)
-        return userRepository
+        return userDetailsService
     }
 
     /*@Bean
