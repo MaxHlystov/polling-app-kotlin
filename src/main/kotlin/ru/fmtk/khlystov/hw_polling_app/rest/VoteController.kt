@@ -18,9 +18,8 @@ class VoteController(private val userRepository: UserRepository,
                      private val voteRepository: VoteRepository) {
 
     @GetMapping("/votes")
-    fun statistics(@RequestParam(required = true) pollId: String,
-                   @RequestParam(required = true) userId: String): Flux<VotesCountDTO> {
-        return withUserAndPoll(userRepository, pollRepository, userId, pollId)
+    fun statistics(@RequestParam(required = true) pollId: String): Flux<VotesCountDTO> {
+        return withUserAndPoll(pollRepository, pollId)
                 .toFlux()
                 .flatMap { (user, poll) ->
                     voteRepository.findAllByPollAndUser(poll, user)
@@ -40,9 +39,8 @@ class VoteController(private val userRepository: UserRepository,
 
     @PostMapping("/votes")
     fun vote(@RequestParam(required = true) pollId: String,
-             @RequestParam(required = true) userId: String,
              @RequestParam(name = "option", required = true) itemId: String): Mono<VoteDTO> {
-        return withUserAndPoll(userRepository, pollRepository, userId, pollId)
+        return withUserAndPoll(pollRepository, pollId)
                 .flatMap { (user, poll) ->
                     poll.getPollItem(itemId).map { pollItem ->
                         Mono.just(Vote(null, user, poll, pollItem))

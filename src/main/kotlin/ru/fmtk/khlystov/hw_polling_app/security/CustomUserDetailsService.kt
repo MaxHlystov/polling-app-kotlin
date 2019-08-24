@@ -10,7 +10,7 @@ import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 
 @Component
-class CustomUserDetailsService(@Autowired val userRepository: UserRepository) : ReactiveUserDetailsService {
+class CustomUserDetailsService(val userRepository: UserRepository) : ReactiveUserDetailsService {
     override fun findByUsername(username: String): Mono<UserDetails> {
         return userRepository.findByName(username)
                 .switchIfEmpty(Mono.defer { Mono.error<User>(UsernameNotFoundException("User Not Found")) })
