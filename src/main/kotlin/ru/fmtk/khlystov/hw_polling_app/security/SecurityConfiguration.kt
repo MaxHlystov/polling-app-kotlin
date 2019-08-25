@@ -24,8 +24,8 @@ class SecurityConfiguration(private val userDetailsService: CustomUserDetailsSer
     @Bean
     fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         http.csrf().disable()
-                .authorizeExchange().pathMatchers(HttpMethod.OPTIONS, "**").permitAll()
-                .and()
+//                .authorizeExchange().pathMatchers(HttpMethod.OPTIONS, "**").permitAll()
+//                .and()
                 .authorizeExchange().pathMatchers("/auth", "/login").permitAll()
                 .and()
                 .authorizeExchange().pathMatchers("/polls/**", "/votes/**").authenticated()
@@ -87,15 +87,15 @@ class SecurityConfiguration(private val userDetailsService: CustomUserDetailsSer
 //        return CorsWebFilter(source)
 //    }
 
-    @Bean
-    fun corsConfigurer(): WebFluxConfigurer {
-        return object : WebFluxConfigurerComposite() {
-
-            override fun addCorsMappings(registry: CorsRegistry) {
-                registry.addMapping("**").allowedOrigins("*")
-                        .allowedMethods("*")
-                        .allowCredentials(true)
-            }
-        }
-    }
+//    @Bean
+//    fun corsConfigurer(): WebFluxConfigurer {
+//        return object : WebFluxConfigurerComposite() {
+//
+//            override fun addCorsMappings(registry: CorsRegistry) {
+//                registry.addMapping("**").allowedOrigins("*")
+//                        .allowedMethods("*")
+//                        .allowCredentials(true)
+//            }
+//        }
+//    }
 }
