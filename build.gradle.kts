@@ -41,6 +41,7 @@ dependencies {
 
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0")
     testCompile("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.5.1")
     testRuntime("org.junit.jupiter:junit-jupiter-engine:5.5.1")
     testImplementation("org.junit.platform:junit-platform-commons:1.4.2")

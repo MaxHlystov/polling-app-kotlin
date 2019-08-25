@@ -13,6 +13,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import reactor.core.publisher.Mono
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
+import ru.fmtk.khlystov.hw_polling_app.rest.dto.UserDTO
 
 @WebFluxTest(UserController::class)
 @ExtendWith(SpringExtension::class)
