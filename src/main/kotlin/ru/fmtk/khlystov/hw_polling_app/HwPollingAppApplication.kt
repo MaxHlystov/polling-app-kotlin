@@ -17,7 +17,6 @@ import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 
 @SpringBootApplication
 @EnableWebFlux
-//@EnableReactiveMongoRepositories
 class HwPollingAppApplication {
 
     @Bean

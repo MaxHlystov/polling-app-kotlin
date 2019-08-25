@@ -10,6 +10,8 @@ import org.mockito.BDDMockito.given
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.reactive.server.WebTestClient
 import reactor.core.publisher.Flux
@@ -20,7 +22,10 @@ import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.VoteRepository
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.VoteDTO
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.VotesCountDTO
+import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetailsService
+import ru.fmtk.khlystov.hw_polling_app.security.SecurityConfiguration
 
+@ContextConfiguration(classes = [SecurityConfiguration::class, CustomUserDetailsService::class])
 @WebFluxTest(VoteController::class)
 @ExtendWith(SpringExtension::class)
 internal class VoteControllerTest {
@@ -39,7 +44,9 @@ internal class VoteControllerTest {
 
     companion object {
         const val trustedUserIdWithoutVotes = "777777777777"
+        const val trustedUserNameWithoutVotes = "User without votes"
         const val notTrustedUserId = "0000000000"
+        const val notTrustedUserName = "Not trusted user name"
         const val notValidPollId = "0000000000"
         val users = generateSequence(1) { i -> i + 1 }
                 .take(4)
@@ -47,7 +54,8 @@ internal class VoteControllerTest {
                 .map { userId -> User(userId, "StoredInDB-$userId") }
                 .toList()
         val trustedUser = users[0]
-        val trustedUserWithoutVotes = User(trustedUserIdWithoutVotes, "User without votes")
+        const val trustedUserName = "StoredInDB-1"
+        val trustedUserWithoutVotes = User(trustedUserIdWithoutVotes, trustedUserNameWithoutVotes)
         val validPolls = generateSequence(1000) { i -> i + 1 }
                 .take(4)
                 .map(Int::toString)
@@ -86,6 +94,8 @@ internal class VoteControllerTest {
         users.forEach { user ->
             given(userRepository.findById(user.id ?: ""))
                     .willReturn(Mono.just(user))
+            given(userRepository.findByName(user.name ?: ""))
+                    .willReturn(Mono.just(user))
         }
         validPolls.forEach { poll ->
             given(pollRepository.findById(poll.id ?: ""))
@@ -97,9 +107,9 @@ internal class VoteControllerTest {
             given(voteRepository.findAllByPollAndUser(vote.poll, vote.user))
                     .willReturn(Flux.just(vote))
         }
-        given(userRepository.findById(notTrustedUserId))
+        given(userRepository.findByName(notTrustedUserName))
                 .willReturn(Mono.empty())
-        given(userRepository.findById(trustedUserIdWithoutVotes))
+        given(userRepository.findByName(trustedUserNameWithoutVotes))
                 .willReturn(Mono.just(trustedUserWithoutVotes))
         given(pollRepository.findById(notValidPollId))
                 .willReturn(Mono.empty())
@@ -108,6 +118,7 @@ internal class VoteControllerTest {
     }
 
     @Test
+    @WithMockUser(username = trustedUserName, authorities = ["ROLE_ADMIN"])
     @DisplayName("Get list of polls for existing poll and trusted user")
     fun statisticsForExistingPollAndTrustedUser() {
         val poll = validPolls[0]
@@ -118,7 +129,7 @@ internal class VoteControllerTest {
                 .toList()
         val jsonMatch = jsonMapper.writeValueAsString(votesCountDTO) ?: ""
         client.get()
-                .uri("/votes?userId=${trustedUser.id}&pollId=${poll.id}")
+                .uri("/votes?pollId=${poll.id}")
                 .exchange()
                 .expectStatus().isOk
                 .expectBody()
@@ -126,25 +137,28 @@ internal class VoteControllerTest {
     }
 
     @Test
+    @WithMockUser(username = notTrustedUserName, authorities = ["ROLE_ADMIN"])
     @DisplayName("Get error for existing poll and not trusted user")
     fun statisticsForExistingPollAndNotTrustedUser() {
         val poll = validPolls[0]
         client.get()
-                .uri("/votes?userId=${notTrustedUserId}&pollId=${poll.id}")
+                .uri("/votes?pollId=${poll.id}")
                 .exchange()
                 .expectStatus().isBadRequest
     }
 
     @Test
+    @WithMockUser(username = trustedUserName, authorities = ["ROLE_ADMIN"])
     @DisplayName("Get error for not existing poll and trusted user")
     fun statisticsForNotExistingPollAndTrustedUser() {
         client.get()
-                .uri("/votes?userId=${trustedUser.id}&pollId=${notValidPollId}")
+                .uri("/votes?pollId=${notValidPollId}")
                 .exchange()
                 .expectStatus().isBadRequest
     }
 
     @Test
+    @WithMockUser(username = trustedUserName, authorities = ["ROLE_ADMIN"])
     @DisplayName("Saving existing vote should return vote DTO with id")
     fun saveExistingVote() {
         val vote = votes[0]
@@ -152,7 +166,7 @@ internal class VoteControllerTest {
                 .willReturn(Mono.just(vote))
         val jsonMatch = jsonMapper.writeValueAsString(VoteDTO(vote))
         client.post()
-                .uri("/votes?userId=${vote.user.id}&pollId=${vote.poll.id}&option=${vote.pollItem.id}")
+                .uri("/votes?pollId=${vote.poll.id}&option=${vote.pollItem.id}")
                 .exchange()
                 .expectStatus().isOk
                 .expectBody()
@@ -160,6 +174,7 @@ internal class VoteControllerTest {
     }
 
     @Test
+    @WithMockUser(username = trustedUserName, authorities = ["ROLE_ADMIN"])
     @DisplayName("Saving not existing vote should return error")
     fun saveNotExistingVote() {
         given(voteRepository.save(any()))

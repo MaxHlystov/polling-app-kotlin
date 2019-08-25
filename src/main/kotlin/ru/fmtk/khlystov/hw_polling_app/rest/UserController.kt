@@ -2,6 +2,7 @@ package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.ReactiveAuthenticationManager
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -16,8 +17,7 @@ import ru.fmtk.khlystov.hw_polling_app.rest.dto.UserDTO
 
 
 @RestController
-class UserController(private val userRepository: UserRepository,
-                     private val authenticationManager: ReactiveAuthenticationManager) {
+class UserController(private val userRepository: UserRepository) {
 
     @CrossOrigin
     @PostMapping("/submit")

@@ -11,7 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
+import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
+import org.springframework.test.context.support.AnnotationConfigContextLoader
 import org.springframework.test.web.reactive.server.WebTestClient
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -22,7 +26,10 @@ import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.AddOrEditRequestDTO
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
+import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetailsService
+import ru.fmtk.khlystov.hw_polling_app.security.SecurityConfiguration
 
+@ContextConfiguration(classes = [SecurityConfiguration::class, CustomUserDetailsService::class])
 @WebFluxTest(PollsController::class)
 @ExtendWith(SpringExtension::class)
 internal class PollsControllerTest {
@@ -39,11 +46,13 @@ internal class PollsControllerTest {
     companion object {
         const val trustedUserName = "StoredInDB"
         const val trustedUserNameWithoutPolls = "User without polls"
+        const val notTrustedUserName = "Not trusted user name"
         const val trustedUserId = "123456789"
         const val trustedUserIdWithoutPolls = "777777777777"
         const val notTrustedUserId = "0000000000"
         const val notValidPollId = "0000000000"
-        val trustedUser = User(trustedUserId, trustedUserName)
+        val trustedUser = User(trustedUserId, trustedUserName, "", "111111")
+        val notTrustedUser = User(notTrustedUserId, notTrustedUserName, "111111")
         val trustedUserWithoutPolls = User(trustedUserIdWithoutPolls, trustedUserNameWithoutPolls)
         val validPolls = generateSequence(1000) { i -> i + 1 }
                 .take(4)
@@ -63,11 +72,11 @@ internal class PollsControllerTest {
 
     @BeforeEach
     fun initMockRepositories() {
-        given(userRepository.findById(trustedUserId))
+        given(userRepository.findByName(trustedUserName))
                 .willReturn(Mono.just(trustedUser))
-        given(userRepository.findById(trustedUserIdWithoutPolls))
+        given(userRepository.findByName(trustedUserNameWithoutPolls))
                 .willReturn(Mono.just(trustedUserWithoutPolls))
-        given(userRepository.findById(notTrustedUserId))
+        given(userRepository.findByName(notTrustedUserName))
                 .willReturn(Mono.empty())
         given(pollRepository.findById(validPollId))
                 .willReturn(Mono.just(validPoll))
@@ -80,12 +89,13 @@ internal class PollsControllerTest {
     }
 
     @Test
-    @DisplayName("Get list of polls")
+    @WithMockUser(username = trustedUserName, authorities = ["ROLE_ADMIN"])
+    @DisplayName("Get list of polls for trusted user")
     fun gettingPolls() {
         val pollsDTO = validPolls.map { poll -> PollDTO(poll, true) }
         val jsonMatch = jsonMapper.writeValueAsString(pollsDTO) ?: ""
         client.get()
-                .uri("/polls?userId=$trustedUserId")
+                .uri("/polls")
                 .exchange()
                 .expectStatus().isOk
                 .expectBody()
@@ -93,6 +103,7 @@ internal class PollsControllerTest {
     }
 
     @Test
+    @WithMockUser(username = trustedUserName, authorities = ["ROLE_ADMIN"])
     @DisplayName("Add a poll")
     fun addPoll() {
         val newPoll = Poll(null, "New poll", trustedUser, genPollItems(4))
@@ -113,6 +124,7 @@ internal class PollsControllerTest {
     }
 
     @Test
+    @WithMockUser(username = notTrustedUserName, authorities = ["ROLE_ADMIN"])
     @DisplayName("Edit an existing poll by owner")
     fun editExistingPollByOwner() {
         val poll = Poll("123", "New poll before edit", trustedUser, genPollItems(4))
@@ -135,6 +147,7 @@ internal class PollsControllerTest {
     }
 
     @Test
+    @WithMockUser(username = trustedUserNameWithoutPolls, authorities = ["ROLE_ADMIN"])
     @DisplayName("Throw exception if edit an existing poll not by owner")
     fun editExistingPollNotByOwner() {
         val poll = Poll("123", "New poll before edit", User("#1234", "Owner of the poll"),
@@ -153,6 +166,7 @@ internal class PollsControllerTest {
     }
 
     @Test
+    @WithMockUser(username = trustedUserNameWithoutPolls, authorities = ["ROLE_ADMIN"])
     @DisplayName("Throw exception if edit not an existing poll")
     fun editNotExistingPoll() {
         val newPoll = Poll(null, "New poll", trustedUser, genPollItems(4))

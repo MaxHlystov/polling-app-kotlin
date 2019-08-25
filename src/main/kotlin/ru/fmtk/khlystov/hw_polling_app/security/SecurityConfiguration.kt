@@ -26,7 +26,7 @@ class SecurityConfiguration(private val userDetailsService: CustomUserDetailsSer
         http.csrf().disable()
 //                .authorizeExchange().pathMatchers(HttpMethod.OPTIONS, "**").permitAll()
 //                .and()
-                .authorizeExchange().pathMatchers("/auth", "/login").permitAll()
+                .authorizeExchange().pathMatchers("/submit", "/login").permitAll()
                 .and()
                 .authorizeExchange().pathMatchers("/polls/**", "/votes/**").authenticated()
                 .and()
