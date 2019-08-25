@@ -1,23 +1,20 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.BDDMockito.given
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
-import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers
-import org.springframework.ui.Model
-import org.springframework.web.server.ResponseStatusException
+import org.springframework.test.context.junit.jupiter.SpringExtension
+import org.springframework.test.web.reactive.server.WebTestClient
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
 import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
 import ru.fmtk.khlystov.hw_polling_app.domain.User
@@ -25,14 +22,13 @@ import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.AddOrEditRequestDTO
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
-import java.util.*
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebFluxTest(PollsController::class)
+@ExtendWith(SpringExtension::class)
 internal class PollsControllerTest {
 
     @Autowired
-    lateinit var mockMvc: MockMvc
+    lateinit var client: WebTestClient
 
     @MockBean
     lateinit var userRepository: UserRepository
@@ -40,16 +36,13 @@ internal class PollsControllerTest {
     @MockBean
     lateinit var pollRepository: PollRepository
 
-    @MockBean
-    lateinit var model: Model
-
     companion object {
-        val trustedUserName = "StoredInDB"
-        val trustedUserNameWithoutPolls = "User without polls"
-        val trustedUserId = "123456789"
-        val trustedUserIdWithoutPolls = "777777777777"
-        val notTrustedUserId = "0000000000"
-        val notValidPollId = "0000000000"
+        const val trustedUserName = "StoredInDB"
+        const val trustedUserNameWithoutPolls = "User without polls"
+        const val trustedUserId = "123456789"
+        const val trustedUserIdWithoutPolls = "777777777777"
+        const val notTrustedUserId = "0000000000"
+        const val notValidPollId = "0000000000"
         val trustedUser = User(trustedUserId, trustedUserName)
         val trustedUserWithoutPolls = User(trustedUserIdWithoutPolls, trustedUserNameWithoutPolls)
         val validPolls = generateSequence(1000) { i -> i + 1 }
@@ -71,17 +64,19 @@ internal class PollsControllerTest {
     @BeforeEach
     fun initMockRepositories() {
         given(userRepository.findById(trustedUserId))
-                .willReturn(Optional.ofNullable(trustedUser))
+                .willReturn(Mono.just(trustedUser))
         given(userRepository.findById(trustedUserIdWithoutPolls))
-                .willReturn(Optional.ofNullable(trustedUserWithoutPolls))
+                .willReturn(Mono.just(trustedUserWithoutPolls))
         given(userRepository.findById(notTrustedUserId))
-                .willReturn(Optional.empty())
+                .willReturn(Mono.empty())
         given(pollRepository.findById(validPollId))
-                .willReturn(Optional.ofNullable(validPoll))
+                .willReturn(Mono.just(validPoll))
         given(pollRepository.findById(notValidPollId))
-                .willReturn(Optional.empty())
+                .willReturn(Mono.empty())
         given(pollRepository.findAll())
-                .willReturn(validPolls)
+                .willReturn(Flux.fromIterable(validPolls))
+        given<Mono<Void>>(pollRepository.delete(Mockito.any()))
+                .willReturn(Mono.empty())
     }
 
     @Test
@@ -89,9 +84,12 @@ internal class PollsControllerTest {
     fun gettingPolls() {
         val pollsDTO = validPolls.map { poll -> PollDTO(poll, true) }
         val jsonMatch = jsonMapper.writeValueAsString(pollsDTO) ?: ""
-        mockMvc.perform(MockMvcRequestBuilders.get("/polls?userId=$trustedUserId"))
-                .andExpect(MockMvcResultMatchers.status().isOk)
-                .andExpect(MockMvcResultMatchers.content().json(jsonMatch))
+        client.get()
+                .uri("/polls?userId=$trustedUserId")
+                .exchange()
+                .expectStatus().isOk
+                .expectBody()
+                .json(jsonMatch)
     }
 
     @Test
@@ -100,17 +98,18 @@ internal class PollsControllerTest {
         val newPoll = Poll(null, "New poll", trustedUser, genPollItems(4))
         val newPollSaved = Poll("123", "New poll", trustedUser, genPollItems(4))
         given(pollRepository.save(newPoll))
-                .willReturn(newPollSaved)
+                .willReturn(Mono.just(newPollSaved))
         val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(newPoll, true))
-        val jsonRequest = jsonMapper.writeValueAsString(addingRequest)
         val jsonMatch = jsonMapper.writeValueAsString(PollDTO(newPollSaved, true))
-        mockMvc.perform(MockMvcRequestBuilders
-                .post("/polls")
-                .content(jsonRequest)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(MockMvcResultMatchers.status().isOk)
-                .andExpect(MockMvcResultMatchers.content().json(jsonMatch))
+        client.post()
+                .uri("/polls")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .body(Mono.just(addingRequest), AddOrEditRequestDTO::class.java)
+                .exchange()
+                .expectStatus().isOk
+                .expectBody()
+                .json(jsonMatch)
     }
 
     @Test
@@ -119,19 +118,20 @@ internal class PollsControllerTest {
         val poll = Poll("123", "New poll before edit", trustedUser, genPollItems(4))
         val pollSaved = Poll("123", "New poll after edit", trustedUser, genPollItems(3))
         given(pollRepository.findById("123"))
-                .willReturn(Optional.ofNullable(poll))
+                .willReturn(Mono.just(poll))
         given(pollRepository.save(poll))
-                .willReturn(pollSaved)
-        val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(poll, true))
-        val jsonRequest = jsonMapper.writeValueAsString(addingRequest)
+                .willReturn(Mono.just(pollSaved))
+        val editRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(poll, true))
         val jsonMatch = jsonMapper.writeValueAsString(PollDTO(pollSaved, true))
-        mockMvc.perform(MockMvcRequestBuilders
-                .put("/polls")
-                .content(jsonRequest)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(MockMvcResultMatchers.status().isOk)
-                .andExpect(MockMvcResultMatchers.content().json(jsonMatch))
+        client.put()
+                .uri("/polls")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .body(Mono.just(editRequest), AddOrEditRequestDTO::class.java)
+                .exchange()
+                .expectStatus().isOk
+                .expectBody()
+                .json(jsonMatch)
     }
 
     @Test
@@ -140,15 +140,16 @@ internal class PollsControllerTest {
         val poll = Poll("123", "New poll before edit", User("#1234", "Owner of the poll"),
                 genPollItems(4))
         given(pollRepository.findById("123"))
-                .willReturn(Optional.ofNullable(poll))
-        val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(poll, true))
-        val jsonRequest = jsonMapper.writeValueAsString(addingRequest)
-        mockMvc.perform(MockMvcRequestBuilders
-                .put("/polls")
-                .content(jsonRequest)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest)
+                .willReturn(Mono.just(poll))
+        val editRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(poll, true))
+        val jsonRequest = jsonMapper.writeValueAsString(editRequest)
+        client.put()
+                .uri("/polls")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .body(Mono.just(editRequest), AddOrEditRequestDTO::class.java)
+                .exchange()
+                .expectStatus().isBadRequest
     }
 
     @Test
@@ -157,35 +158,41 @@ internal class PollsControllerTest {
         val newPoll = Poll(null, "New poll", trustedUser, genPollItems(4))
         val newPollSaved = Poll("123", "New poll", trustedUser, genPollItems(4))
         given(pollRepository.save(newPoll))
-                .willReturn(newPollSaved)
-        val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(newPoll, true))
-        val jsonRequest = jsonMapper.writeValueAsString(addingRequest)
-        mockMvc.perform(MockMvcRequestBuilders
-                .put("/polls")
-                .content(jsonRequest)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest)
+                .willReturn(Mono.just(newPollSaved))
+        val editRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(newPoll, true))
+        client.put()
+                .uri("/polls")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaType.APPLICATION_JSON_UTF8)
+                .body(Mono.just(editRequest), AddOrEditRequestDTO::class.java)
+                .exchange()
+                .expectStatus().isBadRequest
     }
 
     @Test
     @DisplayName("Delete an existing by owner is accepted")
     fun deleteExistingPollByOwner() {
-        mockMvc.perform(delete("/polls?userId=$trustedUserId&pollId=$validPollId"))
-                .andExpect(MockMvcResultMatchers.status().isAccepted)
+        client.delete()
+                .uri("/polls?userId=$trustedUserId&pollId=$validPollId")
+                .exchange()
+                .expectStatus().isOk
     }
 
     @Test
     @DisplayName("Delete an existing poll not by owner must throw BAD_REQUEST")
     fun deleteExistingPollNotByOwner() {
-        mockMvc.perform(delete("/polls?userId=$trustedUserIdWithoutPolls&pollId=$validPollId"))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest)
+        client.delete()
+                .uri("/polls?userId=$trustedUserIdWithoutPolls&pollId=$validPollId")
+                .exchange()
+                .expectStatus().isBadRequest
     }
 
     @Test
     @DisplayName("Delete not an existing poll must throw BAD_REQUEST")
     fun deleteNotExistingPoll() {
-        mockMvc.perform(delete("/polls?userId=$trustedUserId&pollId=$notValidPollId"))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest)
+        client.delete()
+                .uri("/polls?userId=$trustedUserId&pollId=$notValidPollId")
+                .exchange()
+                .expectStatus().isBadRequest
     }
 }

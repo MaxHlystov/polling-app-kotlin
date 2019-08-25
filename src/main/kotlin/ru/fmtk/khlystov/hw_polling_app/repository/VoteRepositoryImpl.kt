@@ -1,43 +1,58 @@
 package ru.fmtk.khlystov.hw_polling_app.repository
 
+import com.mongodb.BasicDBObject
 import org.bson.types.ObjectId
-import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate
+import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.aggregation.Aggregation.*
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.TextCriteria
+import org.springframework.data.mongodb.core.query.TextQuery
 import org.springframework.transaction.annotation.Transactional
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.core.publisher.toMono
 import ru.fmtk.khlystov.hw_polling_app.domain.Poll
 import ru.fmtk.khlystov.hw_polling_app.domain.Vote
 import ru.fmtk.khlystov.hw_polling_app.domain.VotesCount
+import org.springframework.data.mongodb.core.aggregation.ArrayOperators
+import reactor.core.publisher.Operators.`as`
 
-open class VoteRepositoryImpl(private val mongoTemplate: MongoTemplate) : VoteRepositoryCustom {
+
+open class VoteRepositoryImpl(private val mongoTemplate: ReactiveMongoTemplate) : VoteRepositoryCustom {
 
     @Transactional
-    override fun save(vote: Vote): Vote {
+    override fun save(vote: Vote): Mono<Vote> {
         val query = Query.query(Criteria().andOperator(
                 Criteria.where("user.\$id").`is`(ObjectId(vote.user.id)),
                 Criteria.where("poll.\$id").`is`(ObjectId(vote.poll.id))))
-        val votes = mongoTemplate.find(query, Vote::class.java)
-        if (votes.size == 0) {
-            return mongoTemplate.save(vote)
-        }
-        val oldVote = votes[0]
-        return mongoTemplate.save(Vote(oldVote.id, oldVote.user, oldVote.poll, vote.pollItem))
+        return mongoTemplate.find(query, Vote::class.java)
+                .take(1).toMono()
+                .flatMap { oldVote ->
+                    mongoTemplate.save(Vote(oldVote.id, oldVote.user, oldVote.poll, vote.pollItem))
+                }
+                .switchIfEmpty(mongoTemplate.save(vote).toMono())
+
     }
 
-    override fun getVotes(poll: Poll): List<VotesCount> {
-        //db.vote.aggregate({ $match: {"poll.$id" : ObjectId("5d3b7851d606dd318817430b") }},
-        //                  { $group: {_id: "$pollItem", total: { $sum: 1}}})
+    override fun getVotes(poll: Poll): Flux<VotesCount> {
+        // Mongodb query:
+        // db.poll.aggregate([{ $match: {"_id" : ObjectId("5d515912891a7728c45c119e") }},
+        //    {$project: {"items": 1, "_id": 0}},
+        //    {$unwind: "$items"},
+        //    {$lookup: {from: "vote", localField: "items._id", foreignField: "pollItem._id", as: "item"}},
+        //    {$project: {_id: "$items", total: { $size: "$item"}}}])
         val agg = newAggregation(
-                match(Criteria.where("poll.\$id").`is`(ObjectId(poll.id))),
-                group("pollItem").count().`as`("total"),
-                project("total").and("pollItem").previousOperation())
-        val votesFound = mongoTemplate.aggregate(agg, Vote::class.java, VotesCount::class.java)
-                .mappedResults
-        // We expect, there will be not greater than 100 poll items, so O(n^2) is not too bad.
-        return poll.items.map { pollItem ->
-            val vote = votesFound.firstOrNull { votesCount -> votesCount.pollItem.id == pollItem.id }
-            VotesCount(pollItem, vote?.total ?: 0)
-        }.toList()
+                match(Criteria.where("_id").`is`(ObjectId(poll.id))),
+                project("items").andExclude("_id"),
+                unwind("items"),
+                lookup("vote", "items._id", "pollItem._id", "item"),
+                project()
+                        .andExclude("_id")
+                        .andExpression("items").`as`("pollItem")
+                        .and(ArrayOperators.arrayOf("item").length()).`as`("total")
+        )
+        return mongoTemplate.aggregate(agg, Poll::class.java, VotesCount::class.java)
     }
 }

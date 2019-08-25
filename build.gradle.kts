@@ -21,10 +21,17 @@ repositories {
     mavenCentral()
 }
 
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.boot:spring-boot-dependencies:2.1.6.RELEASE")
+    }
+}
+
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
-    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    compile("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
+    compile("org.springframework.boot:spring-boot-starter-webflux") {
+        exclude("hibernate-validator")
+    }
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -32,12 +39,14 @@ dependencies {
     implementation("commons-codec:commons-codec:1.13")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
+    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0")
     testCompile("org.springframework.boot:spring-boot-starter-test")
     testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.5.1")
     testRuntime("org.junit.jupiter:junit-jupiter-engine:5.5.1")
     testImplementation("org.junit.platform:junit-platform-commons:1.4.2")
     testRuntime("org.junit.platform:junit-platform-engine:1.4.2")
+    testCompile("io.projectreactor:reactor-test")
 }
 
 tasks.withType<KotlinCompile> {

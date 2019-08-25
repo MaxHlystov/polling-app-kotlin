@@ -1,4 +1,5 @@
 # Web-poll application
+Frontend see [here](https://github.com/MaxHlystov/polling-app-react-frontend)
 
 ## User Story:
 
@@ -20,3 +21,7 @@ These items need to be done in hw1:
 
 ### Home work #2
 Split application on two parts: backend and frontend.
+
+
+### Home work #3
+Use WebFlux. 
