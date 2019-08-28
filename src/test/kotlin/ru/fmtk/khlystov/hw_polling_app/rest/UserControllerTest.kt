@@ -24,11 +24,15 @@ import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetails
 import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetailsService
 import ru.fmtk.khlystov.hw_polling_app.security.SecurityConfiguration
 import org.springframework.context.ApplicationContext
+import org.springframework.context.annotation.Import
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
 import org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication
 
 
-@ContextConfiguration(classes = [SecurityConfiguration::class, CustomUserDetailsService::class])
+@ContextConfiguration(classes = [SecurityConfiguration::class,
+    CustomUserDetailsService::class,
+    UserController::class])
+//@Import(value = [SecurityConfiguration::class, CustomUserDetailsService::class])
 @WebFluxTest(UserController::class)
 @ExtendWith(SpringExtension::class)
 class UserControllerTest {
@@ -61,8 +65,8 @@ class UserControllerTest {
                 //.apply<>(springSecurity())
                 .configureClient()
                 .build();
-        password = passwordEncoder.encode("111111")
-        trustedUser = User(testId, trustedUserName, email, password)
+        password = "111111"
+        trustedUser = User(testId, trustedUserName, email, passwordEncoder.encode(password))
     }
 
     @Test

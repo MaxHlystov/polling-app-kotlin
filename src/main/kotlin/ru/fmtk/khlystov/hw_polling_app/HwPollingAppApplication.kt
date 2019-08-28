@@ -18,7 +18,7 @@ import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 @EnableWebFlux
 class HwPollingAppApplication {
 
-    val log: Logger = LoggerFactory.getLogger(HwPollingAppApplication::class.java)
+/*    val log: Logger = LoggerFactory.getLogger(HwPollingAppApplication::class.java)
 
     @Bean
     fun start(@Autowired userRepository: UserRepository,
@@ -39,7 +39,7 @@ class HwPollingAppApplication {
                     .doOnNext { user -> log.info("Set \"111111\" password for user ${user.name}") }
                     .subscribe()
         }
-    }
+    }*/
 }
 
 fun main(args: Array<String>) {
