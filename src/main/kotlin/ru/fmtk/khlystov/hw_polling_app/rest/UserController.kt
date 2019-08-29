@@ -1,19 +1,17 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.springframework.http.HttpStatus
-import org.springframework.security.authentication.ReactiveAuthenticationManager
-import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.getMonoHttpError
-import ru.fmtk.khlystov.hw_polling_app.repository.withUser
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.UserDTO
+import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetails
 
 
 @RestController
@@ -36,9 +34,8 @@ class UserController(private val userRepository: UserRepository) {
 
     @CrossOrigin
     @PostMapping("/login")
-    fun login(exchange: ServerWebExchange): Mono<UserDTO> {
-        return withUser()
-                .map { user -> UserDTO(user) }
+    fun login(@AuthenticationPrincipal userDetails: CustomUserDetails): Mono<UserDTO> {
+        return Mono.just(UserDTO(userDetails.user))
         /*.doOnNext { userDTO ->
             //addTokenHeader(exchange.response, userDTO)
         }*/
