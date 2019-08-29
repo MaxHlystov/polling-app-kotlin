@@ -19,7 +19,7 @@ class UserController(private val userRepository: UserRepository) {
 
     @CrossOrigin
     @PostMapping("/submit")
-    fun createUser(@RequestParam(required = true) userName: String,
+    fun createUser(@RequestParam(required = true, name = "username") userName: String,
                    @RequestParam(required = true) password: String,
                    @RequestParam(defaultValue = "") email: String): Mono<UserDTO> {
         return userRepository.findByName(userName)
@@ -36,8 +36,5 @@ class UserController(private val userRepository: UserRepository) {
     @PostMapping("/login")
     fun login(@AuthenticationPrincipal userDetails: CustomUserDetails): Mono<UserDTO> {
         return Mono.just(UserDTO(userDetails.user))
-        /*.doOnNext { userDTO ->
-            //addTokenHeader(exchange.response, userDTO)
-        }*/
     }
 }

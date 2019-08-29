@@ -71,7 +71,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("Error when stored existing user")
-    fun savedUserAuth() {
+    fun saveExistingUser() {
         given(userRepository.findByName(trustedUserName))
                 .willReturn(Mono.just(trustedUser))
         given<Mono<User>>(userRepository.save(Mockito.any()))
@@ -93,7 +93,7 @@ class UserControllerTest {
         client.post()
                 .uri("/login")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .accept(MediaType.APPLICATION_FORM_URLENCODED) //APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData(formData))
                 .exchange()
                 .expectStatus().isOk
@@ -103,7 +103,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("Save user not stored in DB")
-    fun notSavedUserAuth() {
+    fun savedNewUser() {
         val newUserName = "NewInDB"
         val testId = "123456789"
         val newUser = User(testId, newUserName)
@@ -131,8 +131,7 @@ class UserControllerTest {
         client.post()
                 .uri("/submit?username=$newUserName&email=$email&password=$password")
                 .exchange()
-                //.expectStatus().is5xxServerError
-                .expectStatus().isUnauthorized
+                .expectStatus().is5xxServerError
     }
 
 
