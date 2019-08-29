@@ -1,21 +1,26 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.BDDMockito.given
 import org.mockito.Mockito
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.security.servlet.SpringBootWebSecurityConfiguration
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.context.ApplicationContext
+import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.test.context.support.WithMockUser
-import org.springframework.test.context.ContextConfiguration
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
 import org.springframework.test.context.junit.jupiter.SpringExtension
-import org.springframework.test.context.support.AnnotationConfigContextLoader
 import org.springframework.test.web.reactive.server.WebTestClient
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -28,14 +33,33 @@ import ru.fmtk.khlystov.hw_polling_app.rest.dto.AddOrEditRequestDTO
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
 import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetailsService
 import ru.fmtk.khlystov.hw_polling_app.security.SecurityConfiguration
+import org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.core.context.SecurityContext
+import org.springframework.security.core.Authentication
+import org.springframework.security.test.context.support.WithUserDetails
+import org.springframework.security.web.reactive.result.method.annotation.AuthenticationPrincipalArgumentResolver
 
-@ContextConfiguration(classes = [SecurityConfiguration::class, CustomUserDetailsService::class])
+
+//@ContextConfiguration(classes = [SecurityConfiguration::class,
+//    CustomUserDetailsService::class,
+//    UserController::class])
+@Import(value = [SecurityConfiguration::class,
+    CustomUserDetailsService::class,
+    UserController::class,
+    AuthenticationPrincipalArgumentResolver::class])
 @WebFluxTest(PollsController::class)
 @ExtendWith(SpringExtension::class)
 internal class PollsControllerTest {
 
     @Autowired
+    lateinit var context: ApplicationContext
+
+    @Autowired
     lateinit var client: WebTestClient
+
+    @Autowired
+    lateinit var passwordEncoder: PasswordEncoder
 
     @MockBean
     lateinit var userRepository: UserRepository
@@ -43,7 +67,16 @@ internal class PollsControllerTest {
     @MockBean
     lateinit var pollRepository: PollRepository
 
+    lateinit var trustedUser: User
+    lateinit var notTrustedUser: User
+    lateinit var trustedUserWithoutPolls: User
+    lateinit var validPolls: List<Poll>
+    lateinit var validPoll: Poll
+    lateinit var validPollId: String
+
     companion object {
+        const val password: String = "111111"
+        const val email = "test@email.localhost"
         const val trustedUserName = "StoredInDB"
         const val trustedUserNameWithoutPolls = "User without polls"
         const val notTrustedUserName = "Not trusted user name"
@@ -51,16 +84,6 @@ internal class PollsControllerTest {
         const val trustedUserIdWithoutPolls = "777777777777"
         const val notTrustedUserId = "0000000000"
         const val notValidPollId = "0000000000"
-        val trustedUser = User(trustedUserId, trustedUserName, "", "111111")
-        val notTrustedUser = User(notTrustedUserId, notTrustedUserName, "111111")
-        val trustedUserWithoutPolls = User(trustedUserIdWithoutPolls, trustedUserNameWithoutPolls)
-        val validPolls = generateSequence(1000) { i -> i + 1 }
-                .take(4)
-                .map(Int::toString)
-                .map { id -> Poll(id, "Valid Poll #$id", trustedUser, genPollItems(4)) }
-                .toList()
-        val validPoll = validPolls[0]
-        val validPollId = validPoll.id ?: "1234"
         private fun genPollItems(number: Int): List<PollItem> = generateSequence(1) { i -> i + 1 }
                 .take(number)
                 .map(Int::toString)
@@ -72,6 +95,31 @@ internal class PollsControllerTest {
 
     @BeforeEach
     fun initMockRepositories() {
+        val encodedPassword = passwordEncoder.encode(password)
+        trustedUser = User(trustedUserId, trustedUserName, email, encodedPassword)
+        notTrustedUser = User(notTrustedUserId, notTrustedUserName, encodedPassword)
+        trustedUserWithoutPolls = User(trustedUserIdWithoutPolls, trustedUserNameWithoutPolls, email, encodedPassword)
+        validPolls = generateSequence(1000) { i -> i + 1 }
+                .take(4)
+                .map(Int::toString)
+                .map { id -> Poll(id, "Valid Poll #$id", trustedUser, genPollItems(4)) }
+                .toList()
+
+        val authentication = mock(Authentication::class.java)
+        val securityContext = mock(SecurityContext::class.java)
+        `when`(securityContext.authentication).thenReturn(authentication)
+        SecurityContextHolder.setContext(securityContext)
+        `when`(authentication.principal).thenReturn(trustedUser)
+//        SecurityContextHolder.getContext().authentication = authentication
+//        val authInjector = SecurityContextHolderAwareRequestFilter()
+//        authInjector.afterPropertiesSet()
+        client = WebTestClient
+                .bindToApplicationContext(context)
+                .apply { springSecurity() }
+                .configureClient()
+                .build();
+        validPoll = validPolls[0]
+        validPollId = validPoll.id ?: "1234"
         given(userRepository.findByName(trustedUserName))
                 .willReturn(Mono.just(trustedUser))
         given(userRepository.findByName(trustedUserNameWithoutPolls))
@@ -86,10 +134,12 @@ internal class PollsControllerTest {
                 .willReturn(Flux.fromIterable(validPolls))
         given<Mono<Void>>(pollRepository.delete(Mockito.any()))
                 .willReturn(Mono.empty())
+
     }
 
     @Test
-    @WithMockUser(username = trustedUserName, authorities = ["ROLE_ADMIN"])
+    //@WithMockUser(username = trustedUserName, password = password, authorities = ["ROLE_ADMIN"])
+    @WithUserDetails(trustedUserName)
     @DisplayName("Get list of polls for trusted user")
     fun gettingPolls() {
         val pollsDTO = validPolls.map { poll -> PollDTO(poll, true) }
@@ -103,7 +153,7 @@ internal class PollsControllerTest {
     }
 
     @Test
-    @WithMockUser(username = trustedUserName, authorities = ["ROLE_ADMIN"])
+    @WithMockUser(username = trustedUserName, password = password, authorities = ["ROLE_ADMIN"])
     @DisplayName("Add a poll")
     fun addPoll() {
         val newPoll = Poll(null, "New poll", trustedUser, genPollItems(4))

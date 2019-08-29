@@ -1,5 +1,6 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -48,24 +49,22 @@ class UserControllerTest {
     @Autowired
     lateinit var passwordEncoder: PasswordEncoder
 
-    lateinit var password: String
     lateinit var trustedUser: User
 
     companion object {
-        val trustedUserName = "StoredInDB"
-        val testId = "123456789"
-        val email = "test@email.localhost"
+        const val trustedUserName = "StoredInDB"
+        const val testId = "123456789"
+        const val email = "test@email.localhost"
+        const val password = "111111"
     }
 
     @BeforeEach
     fun initTest() {
         client = WebTestClient
                 .bindToApplicationContext(context)
-                // add Spring Security test Support
-                //.apply<>(springSecurity())
+                .apply { springSecurity() }
                 .configureClient()
                 .build();
-        password = "111111"
         trustedUser = User(testId, trustedUserName, email, passwordEncoder.encode(password))
     }
 
