@@ -1,7 +1,6 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -11,16 +10,22 @@ import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.security.servlet.SpringBootWebSecurityConfiguration
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Import
-import org.springframework.http.MediaType
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.context.SecurityContext
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
+import org.springframework.security.web.reactive.result.method.annotation.AuthenticationPrincipalArgumentResolver
+import org.springframework.test.context.TestContext
+import org.springframework.test.context.TestExecutionListeners
 import org.springframework.test.context.junit.jupiter.SpringExtension
+import org.springframework.test.context.support.AbstractTestExecutionListener
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener
 import org.springframework.test.web.reactive.server.WebTestClient
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -29,16 +34,9 @@ import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
-import ru.fmtk.khlystov.hw_polling_app.rest.dto.AddOrEditRequestDTO
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
 import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetailsService
 import ru.fmtk.khlystov.hw_polling_app.security.SecurityConfiguration
-import org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter
-import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.core.context.SecurityContext
-import org.springframework.security.core.Authentication
-import org.springframework.security.test.context.support.WithUserDetails
-import org.springframework.security.web.reactive.result.method.annotation.AuthenticationPrincipalArgumentResolver
 
 
 //@ContextConfiguration(classes = [SecurityConfiguration::class,
@@ -47,10 +45,14 @@ import org.springframework.security.web.reactive.result.method.annotation.Authen
 @Import(value = [SecurityConfiguration::class,
     CustomUserDetailsService::class,
     UserController::class,
-    AuthenticationPrincipalArgumentResolver::class])
+    AuthenticationPrincipalArgumentResolver::class
+])
+@TestExecutionListeners(listeners = [
+    DependencyInjectionTestExecutionListener::class,
+    PollsControllerTest::class])
 @WebFluxTest(PollsController::class)
 @ExtendWith(SpringExtension::class)
-internal class PollsControllerTest {
+internal class PollsControllerTest : AbstractTestExecutionListener() {
 
     @Autowired
     lateinit var context: ApplicationContext
@@ -59,10 +61,10 @@ internal class PollsControllerTest {
     lateinit var client: WebTestClient
 
     @Autowired
-    lateinit var passwordEncoder: PasswordEncoder
+    private lateinit var passwordEncoder: PasswordEncoder
 
     @MockBean
-    lateinit var userRepository: UserRepository
+    private lateinit var userRepository: UserRepository
 
     @MockBean
     lateinit var pollRepository: PollRepository
@@ -95,10 +97,6 @@ internal class PollsControllerTest {
 
     @BeforeEach
     fun initMockRepositories() {
-        val encodedPassword = passwordEncoder.encode(password)
-        trustedUser = User(trustedUserId, trustedUserName, email, encodedPassword)
-        notTrustedUser = User(notTrustedUserId, notTrustedUserName, encodedPassword)
-        trustedUserWithoutPolls = User(trustedUserIdWithoutPolls, trustedUserNameWithoutPolls, email, encodedPassword)
         validPolls = generateSequence(1000) { i -> i + 1 }
                 .take(4)
                 .map(Int::toString)
@@ -120,12 +118,6 @@ internal class PollsControllerTest {
                 .build();
         validPoll = validPolls[0]
         validPollId = validPoll.id ?: "1234"
-        given(userRepository.findByName(trustedUserName))
-                .willReturn(Mono.just(trustedUser))
-        given(userRepository.findByName(trustedUserNameWithoutPolls))
-                .willReturn(Mono.just(trustedUserWithoutPolls))
-        given(userRepository.findByName(notTrustedUserName))
-                .willReturn(Mono.empty())
         given(pollRepository.findById(validPollId))
                 .willReturn(Mono.just(validPoll))
         given(pollRepository.findById(notValidPollId))
@@ -138,8 +130,8 @@ internal class PollsControllerTest {
     }
 
     @Test
-    //@WithMockUser(username = trustedUserName, password = password, authorities = ["ROLE_ADMIN"])
-    @WithUserDetails(trustedUserName)
+    @WithMockUser(username = trustedUserName, password = password, authorities = ["ROLE_ADMIN"])
+    //@WithUserDetails(trustedUserName)
     @DisplayName("Get list of polls for trusted user")
     fun gettingPolls() {
         val pollsDTO = validPolls.map { poll -> PollDTO(poll, true) }
@@ -152,6 +144,7 @@ internal class PollsControllerTest {
                 .json(jsonMatch)
     }
 
+    /*
     @Test
     @WithMockUser(username = trustedUserName, password = password, authorities = ["ROLE_ADMIN"])
     @DisplayName("Add a poll")
@@ -259,4 +252,31 @@ internal class PollsControllerTest {
                 .exchange()
                 .expectStatus().isBadRequest
     }
+     */
+
+    override fun beforeTestClass(testContext: TestContext) {
+        //val passwordEncoder = testContext.applicationContext.getBean("passwordEncoder", PasswordEncoder::class) as PasswordEncoder
+        //val userRepository = testContext.applicationContext.getBean("userRepository", UserRepository::class) as UserRepository
+        val a = 5
+        /*val encodedPassword = passwordEncoder.encode(password)
+        trustedUser = User(trustedUserId, trustedUserName, email, encodedPassword)
+        trustedUserWithoutPolls = User(trustedUserIdWithoutPolls, trustedUserNameWithoutPolls, email, encodedPassword)
+        notTrustedUser = User(notTrustedUserId, notTrustedUserName, "")
+
+        given(userRepository.findByName(trustedUserName))
+                .willReturn(Mono.just(trustedUser))
+        given(userRepository.findByName(trustedUserNameWithoutPolls))
+                .willReturn(Mono.just(trustedUserWithoutPolls))
+        given(userRepository.findByName(notTrustedUserName))
+                .willReturn(Mono.empty())*/
+    }
+
+    override fun beforeTestMethod(testContext: TestContext) {
+        super.beforeTestMethod(testContext)
+    }
+}
+
+interface InstanceTestClassListener {
+    fun beforeClassSetup()
+    fun afterClassSetup()
 }
