@@ -11,7 +11,6 @@ import org.mockito.Mockito.mock
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
@@ -90,7 +89,7 @@ internal class PollsControllerTest() {
     @Test
     @WithUserDetails(trustedUserName)
     @DisplayName("Get list of polls for trusted user")
-    fun gettingPolls() {
+    fun gettingPollsAuth() {
         val pollsDTO = validPolls.map { poll -> PollDTO(poll, true) }
         val jsonMatch = jsonMapper.writeValueAsString(pollsDTO) ?: ""
         client.get()
@@ -99,6 +98,17 @@ internal class PollsControllerTest() {
                 .expectStatus().isOk
                 .expectBody()
                 .json(jsonMatch)
+    }
+
+    @Test
+    @DisplayName("Get list of polls for not trusted user throw error")
+    fun gettingPollsNotAuth() {
+        val pollsDTO = validPolls.map { poll -> PollDTO(poll, true) }
+        val jsonMatch = jsonMapper.writeValueAsString(pollsDTO) ?: ""
+        client.get()
+                .uri("/polls")
+                .exchange()
+                .expectStatus().is5xxServerError
     }
 
     @Test
@@ -244,8 +254,5 @@ internal class PollsControllerTest() {
 
         @Bean(name = ["trustedUser"])
         fun getTrustedUser(): User = trustedUser
-
-        @Bean(name = ["encodedPassword"])
-        fun getEncodedPassword(): String = encodedPassword
     }
 }

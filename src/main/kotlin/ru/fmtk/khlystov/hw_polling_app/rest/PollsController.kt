@@ -34,14 +34,6 @@ class PollsController(private val pollRepository: PollRepository) {
                 .switchIfEmpty(
                         getMonoHttpError(HttpStatus.INTERNAL_SERVER_ERROR,
                                 "Error when getting a list of polls."))
-//        return withUser()
-//                .flatMapMany { user ->
-//                    pollRepository.findAll()
-//                            .map { poll -> PollDTO(poll, user.id == poll.owner.id) }
-//                            .switchIfEmpty(
-//                                    getMonoHttpError(HttpStatus.INTERNAL_SERVER_ERROR,
-//                                            "Error when getting a list of polls."))
-//                }
     }
 
     @PutMapping("/polls")

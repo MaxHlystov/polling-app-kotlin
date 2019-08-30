@@ -1,6 +1,5 @@
 package ru.fmtk.khlystov.hw_polling_app.security
 
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UsernameNotFoundException

@@ -1,6 +1,5 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -16,18 +15,12 @@ import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.util.LinkedMultiValueMap
-import org.springframework.util.MultiValueMap
 import org.springframework.web.reactive.function.BodyInserters
 import reactor.core.publisher.Mono
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
-import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetails
 import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetailsService
 import ru.fmtk.khlystov.hw_polling_app.security.SecurityConfiguration
-import org.springframework.context.ApplicationContext
-import org.springframework.context.annotation.Import
-import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
-import org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication
 
 
 @ContextConfiguration(classes = [SecurityConfiguration::class,
@@ -56,11 +49,6 @@ class UserControllerTest {
 
     @BeforeEach
     fun initTest() {
-//        client = WebTestClient
-//                .bindToApplicationContext(context)
-//                .apply { springSecurity() }
-//                .configureClient()
-//                .build();
         trustedUser = User(testId, trustedUserName, email, passwordEncoder.encode(password))
     }
 

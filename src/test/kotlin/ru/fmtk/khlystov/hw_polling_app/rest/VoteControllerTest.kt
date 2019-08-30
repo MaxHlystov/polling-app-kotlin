@@ -11,7 +11,6 @@ import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
@@ -40,9 +39,6 @@ import ru.fmtk.khlystov.hw_polling_app.security.SecurityConfiguration
 internal class VoteControllerTest {
 
     @Autowired
-    lateinit var context: ApplicationContext
-
-    @Autowired
     lateinit var client: WebTestClient
 
     @Autowired
@@ -59,9 +55,6 @@ internal class VoteControllerTest {
 
     @Autowired
     lateinit var trustedUser: User
-
-    @Autowired
-    lateinit var trustedUserWithoutVotes: User
 
     lateinit var validPolls: List<Poll>
 
@@ -123,7 +116,6 @@ internal class VoteControllerTest {
     }
 
     @Test
-    //@WithUserDetails(notTrustedUserName)
     @DisplayName("Get error for existing poll and not trusted user")
     fun statisticsForExistingPollAndNotTrustedUser() {
         val poll = validPolls[0]
@@ -231,11 +223,5 @@ internal class VoteControllerTest {
 
         @Bean(name = ["trustedUser"])
         fun getTrustedUser(): User = trustedUser
-
-        @Bean(name = ["trustedUserWithoutVotes"])
-        fun getTrustedUserWithoutVotes(): User = trustedUserWithoutVotes
-
-        @Bean(name = ["encodedPassword"])
-        fun getEncodedPassword(): String = encodedPassword
     }
 }
