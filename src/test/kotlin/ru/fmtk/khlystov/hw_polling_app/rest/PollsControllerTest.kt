@@ -18,7 +18,9 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.test.context.support.TestExecutionEvent
 import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.security.test.context.support.WithUserDetails
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
 import org.springframework.security.web.reactive.result.method.annotation.AuthenticationPrincipalArgumentResolver
 import org.springframework.test.context.TestContext
@@ -130,8 +132,8 @@ internal class PollsControllerTest : AbstractTestExecutionListener() {
     }
 
     @Test
-    @WithMockUser(username = trustedUserName, password = password, authorities = ["ROLE_ADMIN"])
-    //@WithUserDetails(trustedUserName)
+    //@WithMockUser(username = trustedUserName, password = password, authorities = ["ROLE_ADMIN"])
+    @WithUserDetails(trustedUserName, setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @DisplayName("Get list of polls for trusted user")
     fun gettingPolls() {
         val pollsDTO = validPolls.map { poll -> PollDTO(poll, true) }
