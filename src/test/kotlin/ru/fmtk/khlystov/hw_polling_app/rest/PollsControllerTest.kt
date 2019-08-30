@@ -55,9 +55,6 @@ internal class PollsControllerTest() {
     }
 
     @Autowired
-    lateinit var context: ApplicationContext
-
-    @Autowired
     lateinit var client: WebTestClient
 
     @MockBean
@@ -65,12 +62,6 @@ internal class PollsControllerTest() {
 
     @Autowired
     lateinit var trustedUser: User
-
-    @Autowired
-    lateinit var notTrustedUser: User
-
-    @Autowired
-    lateinit var trustedUserWithoutPolls: User
 
     lateinit var validPolls: List<Poll>
     lateinit var validPoll: Poll
@@ -253,12 +244,6 @@ internal class PollsControllerTest() {
 
         @Bean(name = ["trustedUser"])
         fun getTrustedUser(): User = trustedUser
-
-        @Bean(name = ["notTrustedUser"])
-        fun getNotTrustedUser(): User = notTrustedUser
-
-        @Bean(name = ["trustedUserWithoutPolls"])
-        fun getTrustedUserWithoutPolls(): User = trustedUserWithoutPolls
 
         @Bean(name = ["encodedPassword"])
         fun getEncodedPassword(): String = encodedPassword
