@@ -33,14 +33,10 @@ import org.springframework.web.reactive.function.client.ExchangeFilterFunctions.
 @ContextConfiguration(classes = [SecurityConfiguration::class,
     CustomUserDetailsService::class,
     UserController::class])
-//@Import(value = [SecurityConfiguration::class, CustomUserDetailsService::class])
 @WebFluxTest(UserController::class)
 @ExtendWith(SpringExtension::class)
 class UserControllerTest {
-
     @Autowired
-    lateinit var context: ApplicationContext
-
     lateinit var client: WebTestClient
 
     @MockBean
@@ -60,11 +56,11 @@ class UserControllerTest {
 
     @BeforeEach
     fun initTest() {
-        client = WebTestClient
-                .bindToApplicationContext(context)
-                .apply { springSecurity() }
-                .configureClient()
-                .build();
+//        client = WebTestClient
+//                .bindToApplicationContext(context)
+//                .apply { springSecurity() }
+//                .configureClient()
+//                .build();
         trustedUser = User(testId, trustedUserName, email, passwordEncoder.encode(password))
     }
 
@@ -92,7 +88,7 @@ class UserControllerTest {
         client.post()
                 .uri("/login")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .accept(MediaType.APPLICATION_FORM_URLENCODED)
+                .accept(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromFormData(formData))
                 .exchange()
                 .expectStatus().isOk
