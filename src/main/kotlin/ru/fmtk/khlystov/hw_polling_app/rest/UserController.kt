@@ -2,6 +2,7 @@ package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -15,7 +16,8 @@ import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetails
 
 
 @RestController
-class UserController(private val userRepository: UserRepository) {
+class UserController(private val userRepository: UserRepository,
+                     private val passwordEncoder: PasswordEncoder) {
 
     @CrossOrigin
     @PostMapping("/submit")
@@ -26,7 +28,7 @@ class UserController(private val userRepository: UserRepository) {
                 .flatMap {
                     getMonoHttpError<User>(HttpStatus.INTERNAL_SERVER_ERROR, "Error creating user: user with such login already exists.")
                 }
-                .switchIfEmpty(userRepository.save(User(null, userName, email, password)))
+                .switchIfEmpty(userRepository.save(User(null, userName, email, passwordEncoder.encode(password))))
                 .filter { user: User -> user.id != null }
                 .switchIfEmpty(getMonoHttpError(HttpStatus.INTERNAL_SERVER_ERROR, "Error creating user."))
                 .map { user -> UserDTO(user) }
