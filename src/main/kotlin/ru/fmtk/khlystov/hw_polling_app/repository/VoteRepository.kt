@@ -10,7 +10,7 @@ import ru.fmtk.khlystov.hw_polling_app.domain.Vote
 import ru.fmtk.khlystov.hw_polling_app.domain.VotesCount
 
 @Repository
-open interface VoteRepository : ReactiveMongoRepository<Vote, String>, VoteRepositoryCustom {
+interface VoteRepository : ReactiveMongoRepository<Vote, String>, VoteRepositoryCustom {
     fun findAllByPollAndUser(poll: Poll, user: User): Flux<Vote>
 }
 

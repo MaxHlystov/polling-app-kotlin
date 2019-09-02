@@ -5,6 +5,7 @@ import org.bson.types.ObjectId
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
 import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.aggregation.Aggregation.*
+import org.springframework.data.mongodb.core.aggregation.ArrayOperators
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.TextCriteria

@@ -32,6 +32,11 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-webflux") {
         exclude("hibernate-validator")
     }
+
+    compile("org.springframework.security:spring-security-core:5.1.6.RELEASE")
+    compile("org.springframework.boot:spring-boot-starter-security")
+    compile("org.springframework.security:spring-security-config:5.1.6.RELEASE")
+
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -41,7 +46,7 @@ dependencies {
 
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0")
     testCompile("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9")
+    testCompile("org.springframework.security:spring-security-test")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.5.1")
     testRuntime("org.junit.jupiter:junit-jupiter-engine:5.5.1")
     testImplementation("org.junit.platform:junit-platform-commons:1.4.2")

@@ -1,5 +1,6 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -8,35 +9,75 @@ import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.http.MediaType
+import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.util.LinkedMultiValueMap
+import org.springframework.web.reactive.function.BodyInserters
 import reactor.core.publisher.Mono
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
-import ru.fmtk.khlystov.hw_polling_app.rest.dto.UserDTO
+import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetailsService
+import ru.fmtk.khlystov.hw_polling_app.security.SecurityConfiguration
 
+
+@ContextConfiguration(classes = [SecurityConfiguration::class,
+    CustomUserDetailsService::class,
+    UserController::class])
 @WebFluxTest(UserController::class)
 @ExtendWith(SpringExtension::class)
-internal class UserControllerTest {
-
+class UserControllerTest {
     @Autowired
     lateinit var client: WebTestClient
 
     @MockBean
     lateinit var userRepository: UserRepository
 
+    @Autowired
+    lateinit var passwordEncoder: PasswordEncoder
+
+    lateinit var trustedUser: User
+
+    companion object {
+        const val trustedUserName = "StoredInDB"
+        const val testId = "123456789"
+        const val email = "test@email.localhost"
+        const val password = "111111"
+    }
+
+    @BeforeEach
+    fun initTest() {
+        trustedUser = User(testId, trustedUserName, email, passwordEncoder.encode(password))
+    }
+
     @Test
-    @DisplayName("Get user stored in DB to authenticate")
-    fun savedUserAuth() {
-        val trustedUserName = "StoredInDB"
-        val testId = "123456789"
-        val trustedUser = User(testId, trustedUserName)
+    @DisplayName("Error when stored existing user")
+    fun saveExistingUser() {
         given(userRepository.findByName(trustedUserName))
                 .willReturn(Mono.just(trustedUser))
         given<Mono<User>>(userRepository.save(Mockito.any()))
                 .willReturn(Mono.empty())
         client.post()
-                .uri("/auth?userName=$trustedUserName")
+                .uri("/submit?username=$trustedUserName&email=$email&password=$password")
+                .exchange()
+                .expectStatus().is5xxServerError
+    }
+
+    @Test
+    @DisplayName("Accept user in db")
+    fun loginUser() {
+        given(userRepository.findByName(trustedUserName))
+                .willReturn(Mono.just(trustedUser))
+        val formData = LinkedMultiValueMap<String, String>()
+        formData.add("username", trustedUserName)
+        formData.add("password", password)
+        client.post()
+                .uri("/login")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .accept(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromFormData(formData))
                 .exchange()
                 .expectStatus().isOk
                 .expectBody()
@@ -44,8 +85,8 @@ internal class UserControllerTest {
     }
 
     @Test
-    @DisplayName("Save user not stored in DB to authenticate")
-    fun notSavedUserAuth() {
+    @DisplayName("Save user not stored in DB")
+    fun savedNewUser() {
         val newUserName = "NewInDB"
         val testId = "123456789"
         val newUser = User(testId, newUserName)
@@ -54,7 +95,7 @@ internal class UserControllerTest {
         given<Mono<User>>(userRepository.save(Mockito.any()))
                 .willReturn(Mono.just(newUser))
         client.post()
-                .uri("/auth?userName=$newUserName")
+                .uri("/submit?username=$newUserName&email=$email&password=$password")
                 .exchange()
                 .expectStatus().isOk
                 .expectBody()
@@ -71,7 +112,7 @@ internal class UserControllerTest {
         given<Mono<User>>(userRepository.save(Mockito.any()))
                 .willReturn(Mono.just(newUser))
         client.post()
-                .uri("/auth?userName=$newUserName")
+                .uri("/submit?username=$newUserName&email=$email&password=$password")
                 .exchange()
                 .expectStatus().is5xxServerError
     }

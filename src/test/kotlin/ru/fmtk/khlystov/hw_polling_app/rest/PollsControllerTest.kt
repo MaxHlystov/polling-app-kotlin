@@ -7,10 +7,17 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.BDDMockito.given
 import org.mockito.Mockito
+import org.mockito.Mockito.mock
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.test.context.support.WithUserDetails
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.reactive.server.WebTestClient
 import reactor.core.publisher.Flux
@@ -20,55 +27,54 @@ import ru.fmtk.khlystov.hw_polling_app.domain.PollItem
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
-import ru.fmtk.khlystov.hw_polling_app.rest.dto.AddOrEditRequestDTO
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
+import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetailsService
+import ru.fmtk.khlystov.hw_polling_app.security.SecurityConfiguration
 
+
+@Import(value = [SecurityConfiguration::class,
+    CustomUserDetailsService::class,
+    PollsController::class
+])
 @WebFluxTest(PollsController::class)
 @ExtendWith(SpringExtension::class)
-internal class PollsControllerTest {
+internal class PollsControllerTest() {
+
+    companion object {
+        const val password: String = "111111"
+        const val email = "test@email.localhost"
+        const val trustedUserName = "StoredInDB"
+        const val trustedUserNameWithoutPolls = "User without polls"
+        const val notTrustedUserName = "Not trusted user name"
+        const val trustedUserId = "123456789"
+        const val trustedUserIdWithoutPolls = "777777777777"
+        const val notTrustedUserId = "0000000000"
+        const val notValidPollId = "0000000000"
+        val jsonMapper = jacksonObjectMapper()
+    }
 
     @Autowired
     lateinit var client: WebTestClient
 
     @MockBean
-    lateinit var userRepository: UserRepository
-
-    @MockBean
     lateinit var pollRepository: PollRepository
 
-    companion object {
-        const val trustedUserName = "StoredInDB"
-        const val trustedUserNameWithoutPolls = "User without polls"
-        const val trustedUserId = "123456789"
-        const val trustedUserIdWithoutPolls = "777777777777"
-        const val notTrustedUserId = "0000000000"
-        const val notValidPollId = "0000000000"
-        val trustedUser = User(trustedUserId, trustedUserName)
-        val trustedUserWithoutPolls = User(trustedUserIdWithoutPolls, trustedUserNameWithoutPolls)
-        val validPolls = generateSequence(1000) { i -> i + 1 }
+    @Autowired
+    lateinit var trustedUser: User
+
+    lateinit var validPolls: List<Poll>
+    lateinit var validPoll: Poll
+    lateinit var validPollId: String
+
+    @BeforeEach
+    fun initMockRepositories() {
+        validPolls = generateSequence(1000) { i -> i + 1 }
                 .take(4)
                 .map(Int::toString)
                 .map { id -> Poll(id, "Valid Poll #$id", trustedUser, genPollItems(4)) }
                 .toList()
-        val validPoll = validPolls[0]
-        val validPollId = validPoll.id ?: "1234"
-        private fun genPollItems(number: Int): List<PollItem> = generateSequence(1) { i -> i + 1 }
-                .take(number)
-                .map(Int::toString)
-                .map { PollItem(it, "Item $it") }
-                .toList()
-
-        val jsonMapper = jacksonObjectMapper()
-    }
-
-    @BeforeEach
-    fun initMockRepositories() {
-        given(userRepository.findById(trustedUserId))
-                .willReturn(Mono.just(trustedUser))
-        given(userRepository.findById(trustedUserIdWithoutPolls))
-                .willReturn(Mono.just(trustedUserWithoutPolls))
-        given(userRepository.findById(notTrustedUserId))
-                .willReturn(Mono.empty())
+        validPoll = validPolls[0]
+        validPollId = validPoll.id ?: "1234"
         given(pollRepository.findById(validPollId))
                 .willReturn(Mono.just(validPoll))
         given(pollRepository.findById(notValidPollId))
@@ -77,15 +83,17 @@ internal class PollsControllerTest {
                 .willReturn(Flux.fromIterable(validPolls))
         given<Mono<Void>>(pollRepository.delete(Mockito.any()))
                 .willReturn(Mono.empty())
+
     }
 
     @Test
-    @DisplayName("Get list of polls")
-    fun gettingPolls() {
+    @WithUserDetails(trustedUserName)
+    @DisplayName("Get list of polls for trusted user")
+    fun gettingPollsAuth() {
         val pollsDTO = validPolls.map { poll -> PollDTO(poll, true) }
         val jsonMatch = jsonMapper.writeValueAsString(pollsDTO) ?: ""
         client.get()
-                .uri("/polls?userId=$trustedUserId")
+                .uri("/polls")
                 .exchange()
                 .expectStatus().isOk
                 .expectBody()
@@ -93,19 +101,31 @@ internal class PollsControllerTest {
     }
 
     @Test
+    @DisplayName("Get list of polls for not trusted user throw error")
+    fun gettingPollsNotAuth() {
+        val pollsDTO = validPolls.map { poll -> PollDTO(poll, true) }
+        val jsonMatch = jsonMapper.writeValueAsString(pollsDTO) ?: ""
+        client.get()
+                .uri("/polls")
+                .exchange()
+                .expectStatus().is5xxServerError
+    }
+
+    @Test
+    @WithUserDetails(trustedUserName)
     @DisplayName("Add a poll")
     fun addPoll() {
         val newPoll = Poll(null, "New poll", trustedUser, genPollItems(4))
         val newPollSaved = Poll("123", "New poll", trustedUser, genPollItems(4))
         given(pollRepository.save(newPoll))
                 .willReturn(Mono.just(newPollSaved))
-        val addingRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(newPoll, true))
+        val addingRequest = PollDTO(newPoll, true)
         val jsonMatch = jsonMapper.writeValueAsString(PollDTO(newPollSaved, true))
         client.post()
                 .uri("/polls")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .accept(MediaType.APPLICATION_JSON_UTF8)
-                .body(Mono.just(addingRequest), AddOrEditRequestDTO::class.java)
+                .body(Mono.just(addingRequest), PollDTO::class.java)
                 .exchange()
                 .expectStatus().isOk
                 .expectBody()
@@ -113,6 +133,7 @@ internal class PollsControllerTest {
     }
 
     @Test
+    @WithUserDetails(trustedUserName)
     @DisplayName("Edit an existing poll by owner")
     fun editExistingPollByOwner() {
         val poll = Poll("123", "New poll before edit", trustedUser, genPollItems(4))
@@ -121,13 +142,13 @@ internal class PollsControllerTest {
                 .willReturn(Mono.just(poll))
         given(pollRepository.save(poll))
                 .willReturn(Mono.just(pollSaved))
-        val editRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(poll, true))
+        val editRequest = PollDTO(poll, true)
         val jsonMatch = jsonMapper.writeValueAsString(PollDTO(pollSaved, true))
         client.put()
                 .uri("/polls")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .accept(MediaType.APPLICATION_JSON_UTF8)
-                .body(Mono.just(editRequest), AddOrEditRequestDTO::class.java)
+                .body(Mono.just(editRequest), PollDTO::class.java)
                 .exchange()
                 .expectStatus().isOk
                 .expectBody()
@@ -135,42 +156,44 @@ internal class PollsControllerTest {
     }
 
     @Test
+    @WithUserDetails(trustedUserNameWithoutPolls)
     @DisplayName("Throw exception if edit an existing poll not by owner")
     fun editExistingPollNotByOwner() {
         val poll = Poll("123", "New poll before edit", User("#1234", "Owner of the poll"),
                 genPollItems(4))
         given(pollRepository.findById("123"))
                 .willReturn(Mono.just(poll))
-        val editRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(poll, true))
-        val jsonRequest = jsonMapper.writeValueAsString(editRequest)
+        val editRequest = PollDTO(poll, true)
         client.put()
                 .uri("/polls")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .accept(MediaType.APPLICATION_JSON_UTF8)
-                .body(Mono.just(editRequest), AddOrEditRequestDTO::class.java)
+                .body(Mono.just(editRequest), PollDTO::class.java)
                 .exchange()
                 .expectStatus().isBadRequest
     }
 
     @Test
+    @WithUserDetails(trustedUserNameWithoutPolls)
     @DisplayName("Throw exception if edit not an existing poll")
     fun editNotExistingPoll() {
         val newPoll = Poll(null, "New poll", trustedUser, genPollItems(4))
         val newPollSaved = Poll("123", "New poll", trustedUser, genPollItems(4))
         given(pollRepository.save(newPoll))
                 .willReturn(Mono.just(newPollSaved))
-        val editRequest = AddOrEditRequestDTO(trustedUserId, PollDTO(newPoll, true))
+        val editRequest = PollDTO(newPoll, true)
         client.put()
                 .uri("/polls")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .accept(MediaType.APPLICATION_JSON_UTF8)
-                .body(Mono.just(editRequest), AddOrEditRequestDTO::class.java)
+                .body(Mono.just(editRequest), PollDTO::class.java)
                 .exchange()
                 .expectStatus().isBadRequest
     }
 
     @Test
-    @DisplayName("Delete an existing by owner is accepted")
+    @WithUserDetails(trustedUserName)
+    @DisplayName("Delete an existing poll by owner is accepted")
     fun deleteExistingPollByOwner() {
         client.delete()
                 .uri("/polls?userId=$trustedUserId&pollId=$validPollId")
@@ -179,6 +202,7 @@ internal class PollsControllerTest {
     }
 
     @Test
+    @WithUserDetails(trustedUserNameWithoutPolls)
     @DisplayName("Delete an existing poll not by owner must throw BAD_REQUEST")
     fun deleteExistingPollNotByOwner() {
         client.delete()
@@ -188,11 +212,47 @@ internal class PollsControllerTest {
     }
 
     @Test
+    @WithUserDetails(trustedUserName)
     @DisplayName("Delete not an existing poll must throw BAD_REQUEST")
     fun deleteNotExistingPoll() {
         client.delete()
                 .uri("/polls?userId=$trustedUserId&pollId=$notValidPollId")
                 .exchange()
                 .expectStatus().isBadRequest
+    }
+
+    private fun genPollItems(number: Int): List<PollItem> = generateSequence(1) { i -> i + 1 }
+            .take(number)
+            .map(Int::toString)
+            .map { PollItem(it, "Item $it") }
+            .toList()
+
+    @Configuration
+    class TestConfig {
+
+        private lateinit var trustedUser: User
+        private lateinit var notTrustedUser: User
+        private lateinit var trustedUserWithoutPolls: User
+        private lateinit var encodedPassword: String
+
+        @Bean(name = ["userRepository"])
+        fun getUserRepository(): UserRepository {
+            val passwordEncoder: PasswordEncoder = BCryptPasswordEncoder()
+            encodedPassword = passwordEncoder.encode(password)
+            val userRepository: UserRepository = mock(UserRepository::class.java)
+            trustedUser = User(trustedUserId, trustedUserName, email, encodedPassword)
+            trustedUserWithoutPolls = User(trustedUserIdWithoutPolls, trustedUserNameWithoutPolls, email, encodedPassword)
+            notTrustedUser = User(notTrustedUserId, notTrustedUserName, "")
+            given(userRepository.findByName(trustedUserName))
+                    .willReturn(Mono.just(trustedUser))
+            given(userRepository.findByName(trustedUserNameWithoutPolls))
+                    .willReturn(Mono.just(trustedUserWithoutPolls))
+            given(userRepository.findByName(notTrustedUserName))
+                    .willReturn(Mono.empty())
+            return userRepository
+        }
+
+        @Bean(name = ["trustedUser"])
+        fun getTrustedUser(): User = trustedUser
     }
 }

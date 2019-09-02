@@ -1,52 +1,49 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import ru.fmtk.khlystov.hw_polling_app.repository.*
-import ru.fmtk.khlystov.hw_polling_app.rest.dto.AddOrEditRequestDTO
+import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
+import ru.fmtk.khlystov.hw_polling_app.repository.getMonoHttpError
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.PollDTO
+import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetails
 
 @CrossOrigin
 @RestController
-class PollsController(private val userRepository: UserRepository,
-                      private val pollRepository: PollRepository) {
+class PollsController(private val pollRepository: PollRepository) {
 
     @PostMapping("/polls")
-    fun addPoll(@RequestBody(required = true) request: AddOrEditRequestDTO): Mono<PollDTO> {
-        val (userId, pollDTO) = request
-        return withUser(userRepository, userId)
-                .map { user -> user to pollDTO.toPoll(user) }
-                .flatMap { (user, poll) ->
-                    pollRepository.save(poll)
-                            .map { savedPoll -> PollDTO(savedPoll, user.id == poll.owner.id) }
-                }
+    fun addPoll(@AuthenticationPrincipal userDetails: CustomUserDetails,
+                @RequestBody(required = true) pollDTO: PollDTO): Mono<PollDTO> {
+        val user = userDetails.user
+        val poll = pollDTO.toPoll(user)
+        val editablePoll = user.id == poll.owner.id
+        return pollRepository.save(poll)
+                .map { savedPoll -> PollDTO(savedPoll, editablePoll) }
                 .switchIfEmpty(getMonoHttpError(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Error when adding a poll."))
     }
 
     @GetMapping("/polls")
-    fun listPolls(@RequestParam(required = true) userId: String): Flux<PollDTO> {
-        return withUser(userRepository, userId)
-                .flatMapMany { pollRepository.findAll() }
-                .map { poll -> PollDTO(poll, userId == poll.owner.id) }
-                .switchIfEmpty(
-                        getMonoHttpError(HttpStatus.INTERNAL_SERVER_ERROR,
-                                "Error when getting a list of polls."))
+    fun listPolls(@AuthenticationPrincipal userDetails: CustomUserDetails): Flux<PollDTO> {
+        val user = userDetails.user
+        return pollRepository.findAll()
+                .map { poll -> PollDTO(poll, user.id == poll.owner.id) }
     }
 
     @PutMapping("/polls")
-    fun editPoll(@RequestBody(required = true) request: AddOrEditRequestDTO): Mono<PollDTO> {
-        val (userId, pollDTO) = request
+    fun editPoll(@AuthenticationPrincipal userDetails: CustomUserDetails,
+                 @RequestBody(required = true) pollDTO: PollDTO): Mono<PollDTO> {
+        val user = userDetails.user
         val pollId = pollDTO.id
         if (pollId == null) {
             return getMonoHttpError(HttpStatus.BAD_REQUEST, "Poll id was not specify.")
         }
-        return withUserAndPoll(userRepository, pollRepository, userId, pollId)
-                .flatMap { (user, poll) ->
-                    if (poll.owner.id == userId) {
+        return pollRepository.findById(pollId)
+                .flatMap { poll ->
+                    if (poll.owner.id == user.id) {
                         val newPoll = pollDTO.toPoll(user)
                         pollRepository.save(newPoll)
                     } else {
@@ -61,14 +58,15 @@ class PollsController(private val userRepository: UserRepository,
     }
 
     @DeleteMapping("/polls")
-    fun deletePoll(@RequestParam(required = true) pollId: String,
-                   @RequestParam(required = true) userId: String): Mono<Void> {
-        return withUserAndPoll(userRepository, pollRepository, userId, pollId)
-                .filter { (user, poll) -> user.id == poll.owner.id }
+    fun deletePoll(@AuthenticationPrincipal userDetails: CustomUserDetails,
+                   @RequestParam(required = true) pollId: String): Mono<Void> {
+        val user = userDetails.user
+        return pollRepository.findById(pollId)
+                .filter { poll -> user.id == poll.owner.id }
                 .switchIfEmpty(
                         getMonoHttpError(HttpStatus.BAD_REQUEST,
                                 "You can't delete a poll isn't belonged to you."))
-                .flatMap { (_, poll) ->
+                .flatMap { poll ->
                     pollRepository.delete(poll)
                 }
     }

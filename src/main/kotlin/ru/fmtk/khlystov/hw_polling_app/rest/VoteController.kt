@@ -1,28 +1,31 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
 import org.springframework.http.HttpStatus
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toFlux
-import reactor.core.publisher.toMono
 import ru.fmtk.khlystov.hw_polling_app.domain.Vote
-import ru.fmtk.khlystov.hw_polling_app.repository.*
+import ru.fmtk.khlystov.hw_polling_app.repository.PollRepository
+import ru.fmtk.khlystov.hw_polling_app.repository.VoteRepository
+import ru.fmtk.khlystov.hw_polling_app.repository.getMonoHttpError
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.VoteDTO
 import ru.fmtk.khlystov.hw_polling_app.rest.dto.VotesCountDTO
+import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetails
 
 @CrossOrigin
 @RestController
-class VoteController(private val userRepository: UserRepository,
-                     private val pollRepository: PollRepository,
+class VoteController(private val pollRepository: PollRepository,
                      private val voteRepository: VoteRepository) {
 
     @GetMapping("/votes")
-    fun statistics(@RequestParam(required = true) pollId: String,
-                   @RequestParam(required = true) userId: String): Flux<VotesCountDTO> {
-        return withUserAndPoll(userRepository, pollRepository, userId, pollId)
+    fun statistics(@AuthenticationPrincipal userDetails: CustomUserDetails,
+                   @RequestParam(required = true) pollId: String): Flux<VotesCountDTO> {
+        val user = userDetails.user
+        return pollRepository.findById(pollId)
                 .toFlux()
-                .flatMap { (user, poll) ->
+                .flatMap { poll ->
                     voteRepository.findAllByPollAndUser(poll, user)
                             .take(1)
                             .map { vote -> vote.pollItem.id to poll }
@@ -39,11 +42,12 @@ class VoteController(private val userRepository: UserRepository,
     }
 
     @PostMapping("/votes")
-    fun vote(@RequestParam(required = true) pollId: String,
-             @RequestParam(required = true) userId: String,
+    fun vote(@AuthenticationPrincipal userDetails: CustomUserDetails,
+             @RequestParam(required = true) pollId: String,
              @RequestParam(name = "option", required = true) itemId: String): Mono<VoteDTO> {
-        return withUserAndPoll(userRepository, pollRepository, userId, pollId)
-                .flatMap { (user, poll) ->
+        val user = userDetails.user
+        return pollRepository.findById(pollId)
+                .flatMap { poll ->
                     poll.getPollItem(itemId).map { pollItem ->
                         Mono.just(Vote(null, user, poll, pollItem))
                     }
