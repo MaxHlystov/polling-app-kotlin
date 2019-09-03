@@ -24,8 +24,10 @@ class SecurityConfiguration(private val userDetailsService: CustomUserDetailsSer
     @Bean
     fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         http.csrf().disable()
-//                .authorizeExchange().pathMatchers(HttpMethod.OPTIONS, "**").permitAll()
-//                .and()
+                .authorizeExchange().pathMatchers(HttpMethod.OPTIONS, "**").permitAll()
+                .and()
+                .authorizeExchange().pathMatchers("/users").hasRole("ADMIN")
+                .and()
                 .authorizeExchange().pathMatchers("/submit", "/login").permitAll()
                 .and()
                 .authorizeExchange().pathMatchers("/polls/**", "/votes/**").authenticated()

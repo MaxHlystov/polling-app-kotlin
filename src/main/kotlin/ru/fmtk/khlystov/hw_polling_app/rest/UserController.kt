@@ -1,6 +1,5 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
-import jdk.internal.joptsimple.internal.Strings
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -40,18 +39,21 @@ class UserController(private val userRepository: UserRepository,
 
     @CrossOrigin
     @PutMapping("/users")
-    fun editUser(@RequestParam(required = true, name = "userid") userId: String,
-                 @RequestParam(name = "username") userName: String,
-                 @RequestParam password: String,
-                 @RequestParam email: String): Mono<UserDTO> {
+    fun editUser(@RequestBody(required = true) userDTO: UserDTO): Mono<UserDTO> {
+        val userId = userDTO.id ?: ""
         return userRepository.findById(userId)
-                .switchIfEmpty(getMonoHttpError<User>(HttpStatus.BAD_REQUEST, "Error user edit: user with such id doesn't exist."))
-                .flatMap {user ->
+                .switchIfEmpty(getMonoHttpError<User>(HttpStatus.BAD_REQUEST, "Error user edit: user with id $userId doesn't exist."))
+                .flatMap { user ->
                     val userToSave = User(userId,
-                            if(Strings.isNullOrEmpty(userName)) user.name else userName,
-                            if(Strings.isNullOrEmpty(email)) user.email else email,
-                            if(Strings.isNullOrEmpty(password)) user.password else password)
-                    userRepository.save(user)
+                            userDTO.name,
+                            userDTO.email,
+                            user.password,
+                            userDTO.accountNonExpired,
+                            userDTO.accountNonLocked,
+                            userDTO.credentialsNonExpired,
+                            userDTO.enabled,
+                            userDTO.roles)
+                    userRepository.save(userToSave)
                 }
                 .map(::UserDTO)
     }
@@ -61,7 +63,7 @@ class UserController(private val userRepository: UserRepository,
     fun deleteUser(@RequestParam(required = true, name = "userid") userId: String): Mono<Void> {
         return userRepository.findById(userId)
                 .switchIfEmpty(getMonoHttpError<User>(HttpStatus.BAD_REQUEST, "Error user delete: user with such id doesn't exist."))
-                .flatMap {userToDelete ->
+                .flatMap { userToDelete ->
                     userRepository.delete(userToDelete)
                 }
     }
