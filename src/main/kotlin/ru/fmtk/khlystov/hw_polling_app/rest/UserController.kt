@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.*
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
@@ -12,11 +13,11 @@ import ru.fmtk.khlystov.hw_polling_app.rest.dto.UserDTO
 import ru.fmtk.khlystov.hw_polling_app.security.CustomUserDetails
 
 
+@CrossOrigin
 @RestController
 class UserController(private val userRepository: UserRepository,
                      private val passwordEncoder: PasswordEncoder) {
 
-    @CrossOrigin
     @PostMapping(value = ["/submit", "/users"])
     fun createUser(@RequestParam(required = true, name = "username") userName: String,
                    @RequestParam(required = true) password: String,
@@ -31,13 +32,16 @@ class UserController(private val userRepository: UserRepository,
                 .map(::UserDTO)
     }
 
-    @CrossOrigin
     @PostMapping("/login")
     fun login(@AuthenticationPrincipal userDetails: CustomUserDetails): Mono<UserDTO> {
         return Mono.just(UserDTO(userDetails.user))
     }
 
-    @CrossOrigin
+    @GetMapping("/users")
+    fun listUsers(): Flux<UserDTO> {
+        return userRepository.findAll().map(::UserDTO)
+    }
+
     @PutMapping("/users")
     fun editUser(@RequestBody(required = true) userDTO: UserDTO): Mono<UserDTO> {
         val userId = userDTO.id ?: ""
@@ -58,7 +62,6 @@ class UserController(private val userRepository: UserRepository,
                 .map(::UserDTO)
     }
 
-    @CrossOrigin
     @DeleteMapping("/users")
     fun deleteUser(@RequestParam(required = true, name = "userid") userId: String): Mono<Void> {
         return userRepository.findById(userId)

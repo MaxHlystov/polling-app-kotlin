@@ -1,7 +1,6 @@
 package ru.fmtk.khlystov.hw_polling_app.rest.dto
 
 import ru.fmtk.khlystov.hw_polling_app.domain.User
-import kotlin.streams.toList
 
 data class UserDTO(var id: String?,
                    val name: String,
@@ -10,7 +9,7 @@ data class UserDTO(var id: String?,
                    val accountNonLocked: Boolean = true,
                    val credentialsNonExpired: Boolean = true,
                    val enabled: Boolean = true,
-                   val roles: Collection<String> = ArrayList()) {
+                   val roles: Set<String> = HashSet()) {
     constructor(user: User) : this(user.id,
             user.name,
             user.email,
@@ -18,5 +17,5 @@ data class UserDTO(var id: String?,
             user.accountNonLocked,
             user.credentialsNonExpired,
             user.enabled,
-            user.roles.stream().toList())
+            user.roles.asSequence().toSet())
 }

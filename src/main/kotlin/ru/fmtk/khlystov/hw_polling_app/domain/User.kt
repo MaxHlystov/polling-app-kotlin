@@ -1,10 +1,8 @@
 package ru.fmtk.khlystov.hw_polling_app.domain
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
-import ru.fmtk.khlystov.hw_polling_app.security.Authority
-import java.util.HashSet
+import java.util.*
 import kotlin.streams.toList
 
 @Document
@@ -16,7 +14,7 @@ data class User(@Id var id: String?,
                 val accountNonLocked: Boolean = true,
                 val credentialsNonExpired: Boolean = true,
                 val enabled: Boolean = true,
-                val roles: Collection<String> = ArrayList()) {
+                val roles: Set<String> = HashSet()) {
 
     constructor(name: String) : this(null, name)
     constructor(user: User) : this(user.id,
@@ -27,8 +25,19 @@ data class User(@Id var id: String?,
             user.accountNonLocked,
             user.credentialsNonExpired,
             user.enabled,
-            user.roles.stream().toList())
+            user.roles.asSequence().toHashSet())
 
+
+    fun newWithRoles(roles: Collection<String>) = User(
+            id,
+            name,
+            email,
+            password,
+            accountNonExpired,
+            accountNonLocked,
+            credentialsNonExpired,
+            enabled,
+            this.roles + roles)
 
     override fun toString(): String {
         return "User(id=$id, name='$name', password='$password')"
