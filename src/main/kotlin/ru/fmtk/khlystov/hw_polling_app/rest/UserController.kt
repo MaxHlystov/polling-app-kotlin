@@ -38,7 +38,7 @@ class UserController(private val userRepository: UserRepository,
     }
 
     @GetMapping("/users")
-    fun listUsers(): Flux<UserDTO> {
+    fun getUsers(): Flux<UserDTO> {
         return userRepository.findAll().map(::UserDTO)
     }
 
