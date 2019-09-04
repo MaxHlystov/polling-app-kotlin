@@ -8,6 +8,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
+import ru.fmtk.khlystov.hw_polling_app.security.Roles
 
 @Component
 class UpdateMongoDb(val userRepository: UserRepository,
@@ -26,7 +27,8 @@ class UpdateMongoDb(val userRepository: UserRepository,
                         Flux.just(User(null,
                                 "User",
                                 "user@localhost",
-                                "")))
+                                "",
+                                roles = listOf(Roles.User.role).toSet())))
                 .filter { user -> user.password.isEmpty() }
                 .map { user ->
                     User(user.id, user.name, user.email,
@@ -41,7 +43,7 @@ class UpdateMongoDb(val userRepository: UserRepository,
         userRepository.findAll()
                 .filter { user -> user.roles.isEmpty() }
                 .map { user ->
-                    user.newWithRoles(listOf("User"))
+                    user.newWithRoles(listOf(Roles.User.role))
                 }
                 .flatMap { user -> userRepository.save(user) }
                 .doOnNext { user -> log.info("Set \"User\" role for user ${user.name}") }
@@ -60,7 +62,7 @@ class UpdateMongoDb(val userRepository: UserRepository,
                             true,
                             true,
                             true,
-                            listOf("ADMIN", "USER").toSet())
+                            listOf(Roles.Admin.role, Roles.User.role).toSet())
                     userRepository.save(admin)
                             .doOnNext { log.info("Created user \"Admin\" with password \"111111\" and role ADMIN.") }
                 })
