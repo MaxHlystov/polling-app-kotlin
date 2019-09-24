@@ -25,7 +25,7 @@ class SecurityConfiguration(private val userDetailsService: CustomUserDetailsSer
                 .and()
                 .authorizeExchange().pathMatchers("/users").hasAuthority(Roles.Admin.role)
                 .and()
-                .authorizeExchange().pathMatchers("/submit", "/login").permitAll()
+                .authorizeExchange().pathMatchers("/submit", "/login", "/actuator", "/actuator/**", "/browser", "/browser/**").permitAll()
                 .and()
                 .authorizeExchange().pathMatchers("/polls/**", "/votes/**").authenticated()
                 .and()
