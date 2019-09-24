@@ -12,34 +12,26 @@ import org.springframework.web.reactive.config.EnableWebFlux
 import reactor.core.publisher.Flux
 import ru.fmtk.khlystov.hw_polling_app.domain.User
 import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
+import org.springframework.boot.context.event.ApplicationReadyEvent
+import org.springframework.context.event.EventListener
+import ru.fmtk.khlystov.hw_polling_app.changelog.UpdateMongoDb
 
 
 @SpringBootApplication
 @EnableWebFlux
 class HwPollingAppApplication {
+    val log: Logger = LoggerFactory.getLogger(HwPollingAppApplication::class.java)
 
-/*    val log: Logger = LoggerFactory.getLogger(HwPollingAppApplication::class.java)
+    @Autowired
+    lateinit var updateMongoDb: UpdateMongoDb
 
     @Bean
-    fun start(@Autowired userRepository: UserRepository,
-              @Autowired passwordEncoder: PasswordEncoder): CommandLineRunner {
+    fun start(): CommandLineRunner {
         return CommandLineRunner {
-            userRepository.findAll()
-                    .switchIfEmpty(
-                            Flux.just(User(null,
-                                    "User",
-                                    "user@localhost",
-                                    "")))
-                    .filter { user -> user.password.isEmpty() }
-                    .map { user ->
-                        User(user.id, user.name, user.email,
-                                passwordEncoder.encode("111111"))
-                    }
-                    .flatMap { user -> userRepository.save(user) }
-                    .doOnNext { user -> log.info("Set \"111111\" password for user ${user.name}") }
-                    .subscribe()
+            updateMongoDb.update()
+
         }
-    }*/
+    }
 }
 
 fun main(args: Array<String>) {

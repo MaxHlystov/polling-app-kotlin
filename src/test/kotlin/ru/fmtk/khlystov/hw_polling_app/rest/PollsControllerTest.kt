@@ -1,7 +1,6 @@
 package ru.fmtk.khlystov.hw_polling_app.rest
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -9,8 +8,8 @@ import org.mockito.BDDMockito.given
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
@@ -56,35 +55,18 @@ internal class PollsControllerTest() {
     @Autowired
     lateinit var client: WebTestClient
 
-    @MockBean
+    @Autowired
     lateinit var pollRepository: PollRepository
 
     @Autowired
     lateinit var trustedUser: User
 
+    @Autowired
+    @Qualifier("validPolls")
     lateinit var validPolls: List<Poll>
+
+    @Autowired
     lateinit var validPoll: Poll
-    lateinit var validPollId: String
-
-    @BeforeEach
-    fun initMockRepositories() {
-        validPolls = generateSequence(1000) { i -> i + 1 }
-                .take(4)
-                .map(Int::toString)
-                .map { id -> Poll(id, "Valid Poll #$id", trustedUser, genPollItems(4)) }
-                .toList()
-        validPoll = validPolls[0]
-        validPollId = validPoll.id ?: "1234"
-        given(pollRepository.findById(validPollId))
-                .willReturn(Mono.just(validPoll))
-        given(pollRepository.findById(notValidPollId))
-                .willReturn(Mono.empty())
-        given(pollRepository.findAll())
-                .willReturn(Flux.fromIterable(validPolls))
-        given<Mono<Void>>(pollRepository.delete(Mockito.any()))
-                .willReturn(Mono.empty())
-
-    }
 
     @Test
     @WithUserDetails(trustedUserName)
@@ -196,7 +178,7 @@ internal class PollsControllerTest() {
     @DisplayName("Delete an existing poll by owner is accepted")
     fun deleteExistingPollByOwner() {
         client.delete()
-                .uri("/polls?userId=$trustedUserId&pollId=$validPollId")
+                .uri("/polls?userId=$trustedUserId&pollId=${validPoll.id}")
                 .exchange()
                 .expectStatus().isOk
     }
@@ -206,7 +188,7 @@ internal class PollsControllerTest() {
     @DisplayName("Delete an existing poll not by owner must throw BAD_REQUEST")
     fun deleteExistingPollNotByOwner() {
         client.delete()
-                .uri("/polls?userId=$trustedUserIdWithoutPolls&pollId=$validPollId")
+                .uri("/polls?userId=$trustedUserIdWithoutPolls&pollId=${validPoll.id}")
                 .exchange()
                 .expectStatus().isBadRequest
     }
@@ -221,12 +203,6 @@ internal class PollsControllerTest() {
                 .expectStatus().isBadRequest
     }
 
-    private fun genPollItems(number: Int): List<PollItem> = generateSequence(1) { i -> i + 1 }
-            .take(number)
-            .map(Int::toString)
-            .map { PollItem(it, "Item $it") }
-            .toList()
-
     @Configuration
     class TestConfig {
 
@@ -234,6 +210,8 @@ internal class PollsControllerTest() {
         private lateinit var notTrustedUser: User
         private lateinit var trustedUserWithoutPolls: User
         private lateinit var encodedPassword: String
+        private lateinit var validPolls: List<Poll>
+        private lateinit var validPoll: Poll
 
         @Bean(name = ["userRepository"])
         fun getUserRepository(): UserRepository {
@@ -252,7 +230,41 @@ internal class PollsControllerTest() {
             return userRepository
         }
 
+        @Bean(name = ["pollRepository"])
+        fun getPollsRepository(): PollRepository {
+            val pollRepository = mock(PollRepository::class.java)
+            validPolls = generateSequence(1000) { i -> i + 1 }
+                    .take(4)
+                    .map(Int::toString)
+                    .map { id -> Poll(id, "Valid Poll #$id", trustedUser, genPollItems(4)) }
+                    .toList()
+            validPoll = validPolls[0]
+            given(pollRepository.findById(validPoll.id ?: "132321321"))
+                    .willReturn(Mono.just(validPoll))
+            given(pollRepository.findById(notValidPollId))
+                    .willReturn(Mono.empty())
+            given(pollRepository.findAll())
+                    .willReturn(Flux.fromIterable(validPolls))
+            given<Mono<Void>>(pollRepository.delete(Mockito.any()))
+                    .willReturn(Mono.empty())
+            return pollRepository
+        }
+
         @Bean(name = ["trustedUser"])
         fun getTrustedUser(): User = trustedUser
+
+        @Bean(name = ["validPolls"])
+        @Qualifier("validPolls")
+        fun getValidPolls(): List<Poll> = validPolls
+
+        @Bean(name = ["validPoll"])
+        fun getValidPoll(): Poll = validPoll
+
     }
 }
+
+fun genPollItems(number: Int): List<PollItem> = generateSequence(1) { i -> i + 1 }
+        .take(number)
+        .map(Int::toString)
+        .map { PollItem(it, "Item $it") }
+        .toList()

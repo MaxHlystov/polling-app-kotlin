@@ -11,9 +11,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.WebFilterChainServerAuthenticationSuccessHandler
-import org.springframework.web.reactive.config.CorsRegistry
-import org.springframework.web.reactive.config.WebFluxConfigurer
-import org.springframework.web.reactive.config.WebFluxConfigurerComposite
 import reactor.core.publisher.Mono
 
 
@@ -24,8 +21,10 @@ class SecurityConfiguration(private val userDetailsService: CustomUserDetailsSer
     @Bean
     fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         http.csrf().disable()
-//                .authorizeExchange().pathMatchers(HttpMethod.OPTIONS, "**").permitAll()
-//                .and()
+                .authorizeExchange().pathMatchers(HttpMethod.OPTIONS).permitAll()
+                .and()
+                .authorizeExchange().pathMatchers("/users").hasAuthority(Roles.Admin.role)
+                .and()
                 .authorizeExchange().pathMatchers("/submit", "/login").permitAll()
                 .and()
                 .authorizeExchange().pathMatchers("/polls/**", "/votes/**").authenticated()
