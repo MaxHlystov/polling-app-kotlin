@@ -32,3 +32,9 @@ Split application on two parts: backend and frontend.
 ### Homework #5
 - Add URL or domain items authorization.
 - Set authorization in the app.
+
+
+### Homework #6
+- Использовать метрики, healthchecks и logfile к приложению
+- И любую другую функциональность на выбор.
+- Опционально: переписать приложение на HATEOAS принципах. 
