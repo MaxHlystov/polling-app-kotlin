@@ -19,7 +19,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-info:
-  git:
-    mode: "FULL"
