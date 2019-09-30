@@ -23,7 +23,7 @@ class SecurityConfiguration(private val userDetailsService: CustomUserDetailsSer
         http.csrf().disable()
                 .authorizeExchange().pathMatchers(HttpMethod.OPTIONS).permitAll()
                 .and()
-                .authorizeExchange().pathMatchers("/users").hasAuthority(Roles.Admin.role)
+                .authorizeExchange().pathMatchers("/users", "/actuator/**", "/browser/**", "/admin_users/**").hasAuthority(Roles.Admin.role)
                 .and()
                 .authorizeExchange().pathMatchers("/submit", "/login").permitAll()
                 .and()

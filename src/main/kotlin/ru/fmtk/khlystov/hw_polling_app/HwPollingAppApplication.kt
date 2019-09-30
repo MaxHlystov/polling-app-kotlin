@@ -7,18 +7,14 @@ import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
-import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.hateoas.config.EnableHypermediaSupport
+import org.springframework.hateoas.config.EnableHypermediaSupport.HypermediaType
 import org.springframework.web.reactive.config.EnableWebFlux
-import reactor.core.publisher.Flux
-import ru.fmtk.khlystov.hw_polling_app.domain.User
-import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
-import org.springframework.boot.context.event.ApplicationReadyEvent
-import org.springframework.context.event.EventListener
 import ru.fmtk.khlystov.hw_polling_app.changelog.UpdateMongoDb
-
 
 @SpringBootApplication
 @EnableWebFlux
+@EnableHypermediaSupport(type = [HypermediaType.HAL])
 class HwPollingAppApplication {
     val log: Logger = LoggerFactory.getLogger(HwPollingAppApplication::class.java)
 
