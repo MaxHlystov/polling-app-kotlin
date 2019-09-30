@@ -33,8 +33,12 @@ Split application on two parts: backend and frontend.
 - Add URL or domain items authorization.
 - Set authorization in the app.
 
-
 ### Homework #6
 - Использовать метрики, healthchecks и logfile к приложению
 - И любую другую функциональность на выбор.
 - Опционально: переписать приложение на HATEOAS принципах. 
+
+### Homework #7
+- Обернуть приложение в docker-контейнер
+- Обернуть приложение в docker-контейнер, БД тоже. Настроить связь между ними.
+- Опционально: сделать это в локальном кубе.
