@@ -6,6 +6,23 @@ spring:
       database: ${database:polling-app}
 
 logging:
+  file: "tmp_log.log"
   level:
     org.springframework.data.mongodb.core.MongoTemplate: DEBUG
     org.springframework.data.mongodb.core.ReactiveMongoTemplate: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+  info:
+    app:
+      name: "hw_polling_app_kotlin"
+      description: "Polling application backend"
+      version: "1.0.0"
+      encoding: UTF-8
