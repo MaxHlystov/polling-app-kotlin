@@ -13,4 +13,6 @@ services:
     depends_on:
       - mongo
     environment:
-      MONGO_URI: "mongodb://mongo:27017/polling-app"
+      host=mongo
+      port=21017
+      database=polling-app
