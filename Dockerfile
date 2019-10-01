@@ -1,4 +1,4 @@
-FROM gradle:5.4.1-jdk-11 AS build
+FROM gradle:5.6.2-jdk11 AS build
 
 ENV PROJECT_DIR="/opt/polling_app"
 RUN mkdir -p $PROJECT_DIR
