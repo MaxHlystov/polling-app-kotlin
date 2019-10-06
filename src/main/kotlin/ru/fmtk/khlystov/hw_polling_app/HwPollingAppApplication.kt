@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import org.springframework.cloud.netflix.hystrix.dashboard.EnableHystrixDashboard
 import org.springframework.context.annotation.Bean
 import org.springframework.hateoas.config.EnableHypermediaSupport
 import org.springframework.hateoas.config.EnableHypermediaSupport.HypermediaType
@@ -14,6 +15,7 @@ import ru.fmtk.khlystov.hw_polling_app.changelog.UpdateMongoDb
 
 @SpringBootApplication
 @EnableWebFlux
+@EnableHystrixDashboard
 @EnableHypermediaSupport(type = [HypermediaType.HAL])
 class HwPollingAppApplication {
     val log: Logger = LoggerFactory.getLogger(HwPollingAppApplication::class.java)
