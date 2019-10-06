@@ -19,7 +19,6 @@ management:
   endpoint:
     health:
       show-details: always
-
   info:
     app:
       name: "hw_polling_app_kotlin"

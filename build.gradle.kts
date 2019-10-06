@@ -3,8 +3,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("org.springframework.boot") version "2.1.6.RELEASE"
     id("io.spring.dependency-management") version "1.0.7.RELEASE"
-    kotlin("jvm") version "1.2.71"
-    kotlin("plugin.spring") version "1.2.71"
+    kotlin("jvm") version "1.3.50"
+    kotlin("plugin.spring") version "1.3.50"
 }
 
 group = "ru.fmtk.khlystov"
@@ -46,6 +46,11 @@ dependencies {
 
     compile("org.springframework.boot:spring-boot-starter-actuator")
     compile("org.springframework.data:spring-data-rest-hal-browser:3.1.10.RELEASE")
+
+    compile("org.springframework.cloud:spring-cloud-netflix-dependencies:1.0.6.RELEASE:pom")
+    compile("org.springframework.cloud:spring-cloud-starter-netflix-hystrix:2.1.3.RELEASE")
+    compile("org.springframework.cloud:spring-cloud-starter-netflix-hystrix-dashboard:2.1.2.RELEASE")
+
 
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0")
     testCompile("org.springframework.boot:spring-boot-starter-test")
