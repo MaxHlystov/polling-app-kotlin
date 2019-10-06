@@ -3,7 +3,7 @@ services:
   mongo:
     image: mongo:4.0.10
     ports:
-      - 27017
+      - 27017:27017
   polling_app:
     build: .
     ports:
@@ -12,5 +12,5 @@ services:
       - mongo
     environment:
       host: mongo
-      port: 21017
+      port: 27017
       database: polling-app
