@@ -211,7 +211,7 @@ internal class VoteControllerTest {
             users.forEach { user ->
                 given(userRepository.findById(user.id ?: ""))
                         .willReturn(Mono.just(user))
-                given(userRepository.findByName(user.name ?: ""))
+                given(userRepository.findByName(user.name))
                         .willReturn(Mono.just(user))
             }
             given(userRepository.findByName(notTrustedUserName))

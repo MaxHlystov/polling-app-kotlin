@@ -86,7 +86,6 @@ internal class PollsControllerTest() {
     @DisplayName("Get list of polls for not trusted user throw error")
     fun gettingPollsNotAuth() {
         val pollsDTO = validPolls.map { poll -> PollDTO(poll, true) }
-        val jsonMatch = jsonMapper.writeValueAsString(pollsDTO) ?: ""
         client.get()
                 .uri("/polls")
                 .exchange()
