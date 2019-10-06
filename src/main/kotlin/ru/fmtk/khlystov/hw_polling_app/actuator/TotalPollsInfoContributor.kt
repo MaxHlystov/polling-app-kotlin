@@ -13,5 +13,4 @@ class TotalPollsInfoContributor(private val pollRepository: PollRepository) : In
         pollsStatistics["total"] = pollRepository.count().block() ?: 0
         builder?.withDetail("polls", pollsStatistics)
     }
-
 }
