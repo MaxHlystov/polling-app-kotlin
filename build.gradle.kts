@@ -45,7 +45,6 @@ dependencies {
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     compile("org.springframework.boot:spring-boot-starter-actuator")
-    compile("org.springframework.data:spring-data-rest-hal-browser:3.1.10.RELEASE")
 
     compile("org.springframework.cloud:spring-cloud-netflix-dependencies:1.0.6.RELEASE")
     compile("org.springframework.cloud:spring-cloud-starter-netflix-hystrix:2.1.3.RELEASE")
