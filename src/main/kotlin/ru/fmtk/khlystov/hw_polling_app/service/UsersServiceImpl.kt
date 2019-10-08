@@ -11,7 +11,7 @@ import ru.fmtk.khlystov.hw_polling_app.repository.UserRepository
 class UsersServiceImpl(private val userRepository: UserRepository) : UsersService {
 
     override fun findAll(): Flux<User> = userRepository.findAll()
-//    HystrixCommands
+//        HystrixCommands
 //            .from(userRepository.findAll())
 //            .fallback(Flux.just(User(null, "Empty user")))
 //            .groupName("Users")

@@ -13,9 +13,9 @@ import org.springframework.web.reactive.config.EnableWebFlux
 import ru.fmtk.khlystov.hw_polling_app.changelog.UpdateMongoDb
 
 @SpringBootApplication
+@EnableCircuitBreaker
+@EnableHystrixDashboard
 @EnableWebFlux
-//@EnableCircuitBreaker
-//@EnableHystrixDashboard
 class HwPollingAppApplication {
     val log: Logger = LoggerFactory.getLogger(HwPollingAppApplication::class.java)
 
@@ -26,7 +26,6 @@ class HwPollingAppApplication {
     fun start(): CommandLineRunner {
         return CommandLineRunner {
             updateMongoDb.update()
-
         }
     }
 }
