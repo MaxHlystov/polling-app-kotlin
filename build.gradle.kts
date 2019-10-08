@@ -26,12 +26,6 @@ repositories {
     mavenCentral()
 }
 
-//dependencyManagement {
-//    imports {
-//        mavenBom("org.springframework.boot:spring-boot-dependencies:2.1.6.RELEASE")
-//    }
-//}
-
 extra["springCloudVersion"] = "Greenwich.SR3"
 
 dependencies {
