@@ -16,7 +16,7 @@ import ru.fmtk.khlystov.hw_polling_app.changelog.UpdateMongoDb
 @SpringBootApplication
 @EnableCircuitBreaker
 @EnableHystrixDashboard
-@EnableWebFlux
+//@EnableWebFlux
 class HwPollingAppApplication {
     val log: Logger = LoggerFactory.getLogger(HwPollingAppApplication::class.java)
 
