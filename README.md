@@ -44,6 +44,5 @@ Split application on two parts: backend and frontend.
 - Опционально: сделать это в локальном кубе.
 
 ### Homework #8
-- Обернуть внешние вызовы в Hystrix.
 - Обернуть все внешние вызовы в Hystrix.
 - Дополнительно (опционально): Поднять Turbine Dashboard для мониторинга.
