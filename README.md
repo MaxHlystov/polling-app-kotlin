@@ -1,6 +1,7 @@
 # Web-poll application
-Frontend see [here](https://github.com/MaxHlystov/polling-app-react-frontend)
+Frontend see [here](https://github.com/MaxHlystov/polling-app-react-frontend)  
 You cat connect to the application [here](https://spring-polling-app.herokuapp.com/)
+
 ## User Story:
 
 -    As an authenticated user, I can keep my polls and come back later to access them.
