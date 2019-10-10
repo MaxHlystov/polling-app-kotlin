@@ -1,6 +1,6 @@
 # Web-poll application
 Frontend see [here](https://github.com/MaxHlystov/polling-app-react-frontend)  
-You cat connect to the application [here](https://spring-polling-app.herokuapp.com/)
+You can connect to the test application [here](https://spring-polling-app.herokuapp.com/)
 
 ## User Story:
 
