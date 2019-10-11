@@ -36,6 +36,7 @@ bin/
 ### Another files ###
 .log
 HELP.md
+.gz
 
 
 
