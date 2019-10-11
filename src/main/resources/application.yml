@@ -25,3 +25,18 @@ management:
       description: "Polling application backend"
       version: "1.0.0"
       encoding: UTF-8
+
+
+hystrix:
+  command:
+    FindAllUsers:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 3000
+  group:
+    Users:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 3000
