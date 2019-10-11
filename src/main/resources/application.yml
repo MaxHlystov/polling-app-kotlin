@@ -1,4 +1,5 @@
 spring:
+  application.name: "hw_polling_app_kotlin"
   data:
     mongodb:
       host: ${pollingapp.db.host:localhost}
