@@ -18,7 +18,7 @@ class PollServiceImpl(private val pollRepository: PollRepository) : PollService 
                     User(null, "Empty user"),
                     listOf())))
             .groupName("Polls")
-            .commandName("FindAllUsers")
+            .commandName("FindAllPolls")
             .toFlux()
 
     override fun findById(id: String): Mono<Poll> = HystrixCommands
@@ -28,19 +28,19 @@ class PollServiceImpl(private val pollRepository: PollRepository) : PollService 
                     User(null, "Empty user"),
                     listOf())))
             .groupName("Polls")
-            .commandName("FindAllUsers")
+            .commandName("FindPollById")
             .toMono()
 
-    override fun save(user: Poll): Mono<Poll> = HystrixCommands
-            .from(pollRepository.save(user).withRandomDelay())
+    override fun save(poll: Poll): Mono<Poll> = HystrixCommands
+            .from(pollRepository.save(poll).withRandomDelay())
             .fallback(Mono.just(Poll(null,
                     "Empty poll",
-                    User(null, "Empty user"),
+                    User(null, "Empty poll"),
                     listOf())))
             .groupName("Polls")
-            .commandName("FindAllUsers")
+            .commandName("SavePoll")
             .toMono()
 
 
-    override fun delete(user: Poll): Mono<Void> = pollRepository.delete(user)
+    override fun delete(poll: Poll): Mono<Void> = pollRepository.delete(poll)
 }
