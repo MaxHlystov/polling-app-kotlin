@@ -45,7 +45,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
 
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-hystrix")
-    implementation("org.springframework.cloud:spring-cloud-starter-netflix-hystrix-dashboard")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
