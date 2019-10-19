@@ -1,11 +1,8 @@
 package ru.fmtk.khlystov.hw_polling_app.security
 
-import org.slf4j.LoggerFactory
 import org.springframework.security.core.GrantedAuthority
-import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import ru.fmtk.khlystov.hw_polling_app.domain.User
-import kotlin.streams.toList
 
 open class CustomUserDetails(val user: User) : UserDetails {
     override fun getAuthorities(): Collection<GrantedAuthority> {

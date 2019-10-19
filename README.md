@@ -1,5 +1,7 @@
 # Web-poll application
-Frontend see [here](https://github.com/MaxHlystov/polling-app-react-frontend)
+Frontend see [here](https://github.com/MaxHlystov/polling-app-react-frontend)  
+You can connect to the test application [here](https://spring-polling-app.herokuapp.com/)  
+Hystrix dashboard defined [here](./hystrix-dashboard)  
 
 ## User Story:
 
@@ -34,11 +36,15 @@ Split application on two parts: backend and frontend.
 - Set authorization in the app.
 
 ### Homework #6
-- Использовать метрики, healthchecks и logfile к приложению
+- Использовать метрики, healthchecks и logfile к приложению.
 - И любую другую функциональность на выбор.
 - Опционально: переписать приложение на HATEOAS принципах. 
 
 ### Homework #7
-- Обернуть приложение в docker-контейнер
+- Обернуть приложение в docker-контейнер.
 - Обернуть приложение в docker-контейнер, БД тоже. Настроить связь между ними.
 - Опционально: сделать это в локальном кубе.
+
+### Homework #8
+- Обернуть все внешние вызовы в Hystrix.
+- Дополнительно (опционально): Поднять Turbine Dashboard для мониторинга.

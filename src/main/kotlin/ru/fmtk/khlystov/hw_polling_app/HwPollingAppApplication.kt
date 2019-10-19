@@ -7,15 +7,14 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker
 import org.springframework.context.annotation.Bean
-import org.springframework.hateoas.config.EnableHypermediaSupport
-import org.springframework.hateoas.config.EnableHypermediaSupport.HypermediaType
 import org.springframework.web.reactive.config.EnableWebFlux
 import ru.fmtk.khlystov.hw_polling_app.changelog.UpdateMongoDb
 
 @SpringBootApplication
+@EnableCircuitBreaker
 @EnableWebFlux
-@EnableHypermediaSupport(type = [HypermediaType.HAL])
 class HwPollingAppApplication {
     val log: Logger = LoggerFactory.getLogger(HwPollingAppApplication::class.java)
 
@@ -36,7 +35,6 @@ class HwPollingAppApplication {
         log.info("Mongo connection string: $host:$port/$database")
         return CommandLineRunner {
             updateMongoDb.update()
-
         }
     }
 }

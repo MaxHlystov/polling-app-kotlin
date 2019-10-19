@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: "hw_polling_app_kotlin"
   data:
     mongodb:
       host: ${pollingapp.db.host:localhost}
@@ -19,10 +21,24 @@ management:
   endpoint:
     health:
       show-details: always
-
   info:
     app:
       name: "hw_polling_app_kotlin"
       description: "Polling application backend"
       version: "1.0.0"
       encoding: UTF-8
+
+
+hystrix:
+  command:
+    FindAllUsers:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 3000
+  group:
+    Users:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 3000
