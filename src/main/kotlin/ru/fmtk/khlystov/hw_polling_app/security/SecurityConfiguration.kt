@@ -11,6 +11,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.WebFilterChainServerAuthenticationSuccessHandler
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.reactive.CorsWebFilter
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
 import reactor.core.publisher.Mono
 
 
@@ -74,24 +77,26 @@ class SecurityConfiguration(private val userDetailsService: CustomUserDetailsSer
 //        return bean
 //    }
 
-//    @Bean
-//    fun corsWebFilter(): CorsWebFilter {
-//        val config = CorsConfiguration()
-//        config.allowCredentials = true
-//        config.addAllowedOrigin("http://localhost:3000")
-//        config.addAllowedHeader("*")
-//        config.addAllowedMethod("*")
-//        val source = UrlBasedCorsConfigurationSource()
-//        source.registerCorsConfiguration("/**", config)
-//        return CorsWebFilter(source)
-//    }
+    @Bean
+    fun corsWebFilter(): CorsWebFilter {
+        val config = CorsConfiguration()
+        config.allowCredentials = true
+        config.addAllowedOrigin("*")
+        config.addAllowedHeader("*")
+        config.addAllowedMethod("*")
+        val source = UrlBasedCorsConfigurationSource()
+        source.registerCorsConfiguration("/**", config)
+        return CorsWebFilter(source)
+    }
 
 //    @Bean
 //    fun corsConfigurer(): WebFluxConfigurer {
 //        return object : WebFluxConfigurerComposite() {
 //
 //            override fun addCorsMappings(registry: CorsRegistry) {
-//                registry.addMapping("**").allowedOrigins("*")
+//                registry.addMapping("**")
+//                        .allowedOrigins("*")
+//                        .allowedHeaders("Origin", "X-Requested-With", "Content-Type", "Accept")
 //                        .allowedMethods("*")
 //                        .allowCredentials(true)
 //            }
