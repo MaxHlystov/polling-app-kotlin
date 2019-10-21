@@ -24,6 +24,8 @@ class SecurityConfiguration(private val userDetailsService: CustomUserDetailsSer
     @Bean
     fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         http.csrf().disable()
+                .cors()
+                .and()
                 .authorizeExchange().pathMatchers(HttpMethod.OPTIONS).permitAll()
                 .and()
                 .authorizeExchange().pathMatchers("/browser/**", "/admin_users/**").hasAuthority(Roles.Admin.role)
